@@ -10,3 +10,6 @@ __pycache__/
 
 # Audio made by TTS
 *.wav
+
+# Trained estimator / outcome tables
+models/
