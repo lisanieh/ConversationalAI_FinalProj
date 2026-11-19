@@ -1,0 +1,5 @@
+# Robot customer (steps 1-5). Only Faker is needed; it falls back to built-in names without it.
+faker>=30
+# Customer brain back end, pick one (not pip packages for Ollama):
+#   Ollama (laptop):  https://ollama.com  ->  ollama pull qwen2.5:7b-instruct
+#   vLLM (PACE GPU):  pip install vllm    ->  vllm serve Qwen/Qwen2.5-7B-Instruct

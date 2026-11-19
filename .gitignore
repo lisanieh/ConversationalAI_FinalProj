@@ -1,0 +1,12 @@
+# Not code
+*.pdf
+pace/
+runs/
+logs/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Audio made by TTS
+*.wav
