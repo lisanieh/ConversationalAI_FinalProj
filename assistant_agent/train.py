@@ -1,12 +1,14 @@
 """Train the slot error estimator and the repair outcome model from FIT-phase logs.
 
-  python -m assistant_agent.train --attempts logs/fit/attempts.jsonl --out models/
+  python -m assistant_agent.train --attempts logs/fit/attempts.jsonl          --replays logs/fit/replays.jsonl --out models/
   # ablations
   python -m assistant_agent.train ... --drop agreement --out models/no_agreement/
   python -m assistant_agent.train ... --calibration none --out models/no_calib/
 
 Split 60/20/20 (train / calibration / test) by GOAL: every attempt from the same
-goal (all policies, conditions) lands in the same split, so nothing leaks.
+goal (all policies, conditions, seeds) lands in the same split, so nothing leaks.
+r_a / e_a / c_a come from the save-point replays when --replays is given,
+otherwise from forced-policy runs (always confirm / spell / type).
 """
 
 from __future__ import annotations
@@ -55,6 +57,7 @@ def report(name: str, y, p) -> None:
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--attempts", nargs="+", required=True)
+    ap.add_argument("--replays", nargs="*", default=[], help="save-point replays (preferred for r/e/c)")
     ap.add_argument("--calibration", default="temperature", choices=["temperature", "platt", "none"])
     ap.add_argument("--drop", nargs="*", default=[], help="features to remove (ablation)")
     ap.add_argument("--C", type=float, default=1.0, help="inverse L2 strength")
@@ -88,14 +91,22 @@ def main(argv=None):
         print(f"  {k:24s} {v:+.3f}")
     est.save(out / "estimator.json")
 
-    outcomes = RepairOutcomeModel(min_n=a.min_n).fit(attempts)
+    if a.replays:
+        replays = load_jsonl(*a.replays)
+        outcomes = RepairOutcomeModel(min_n=a.min_n).fit_replays(replays)
+        print(f"Repair outcomes from {len(replays)} save-point replays")
+    else:
+        outcomes = RepairOutcomeModel(min_n=a.min_n).fit(attempts)
+        print("Repair outcomes from forced-policy runs")
     if not outcomes.table:
-        print("WARNING: no forced confirm/spell/type runs found; outcomes.json is empty")
+        print("WARNING: no replays or forced confirm/spell/type runs found; outcomes.json is empty")
     outcomes.save(out / "outcomes.json")
     print("Repair outcomes (pooled over slot types):")
     for k, v in outcomes.table.items():
         if k.endswith("|*"):
-            print(f"  {k:10s} r={v['r']:.3f}  e={v['e']:.3f}  (n_wrong={v['n_wrong']}, n_right={v['n_right']})")
+            c = f"{v['c']:.1f}s" if v.get("c") is not None else "prior"
+            print(f"  {k:10s} r={v['r']:.3f}  e={v['e']:.3f}  c={c:>6s}  "
+                  f"(n_wrong={v['n_wrong']}, n_right={v['n_right']})")
     print(f"Saved {out / 'estimator.json'} and {out / 'outcomes.json'}")
 
 

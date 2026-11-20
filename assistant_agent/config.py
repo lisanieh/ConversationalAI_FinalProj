@@ -22,10 +22,13 @@ def schema(domain: str) -> list[str]:
 ACTIONS = ("accept", "confirm", "spell", "type")
 
 # c_a in Eq. (1): user effort per action, and C_w: cost of committing a wrong
-# value. Same units ("seconds of user time"). Swept in the robustness analysis.
+# value, both in SECONDS of the customer's time. These are only priors: once the
+# fit phase has run, U2R uses the measured mean effort per action (outcomes.json,
+# from effort.EffortModel). C_w = 60 s means "a wrong booking costs the customer
+# about a minute to notice and fix"; it is swept in the robustness analysis.
 # "reask" is the plain voice re-ask used after a "no" to a confirmation.
-EFFORT = {"accept": 0.0, "confirm": 0.5, "spell": 2.0, "type": 3.0, "reask": 1.0}
-C_W = 10.0
+EFFORT = {"accept": 0.0, "confirm": 3.0, "spell": 10.0, "type": 12.0, "reask": 4.0}
+C_W = 60.0
 
 SLOT_TYPE = {
     "name": "name", "email": "email", "phone": "phone",

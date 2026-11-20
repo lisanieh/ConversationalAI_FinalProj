@@ -11,6 +11,7 @@ every goal slot (not the per-turn MultiWOZ JGA); say so in the paper.
 from __future__ import annotations
 
 from .config import slot_type
+from .effort import EffortModel
 from .values import canonical, values_match
 
 
@@ -53,16 +54,31 @@ def classify_error(slot: str, ref: str | None, hyp: str | None) -> str:
     return "substitution"
 
 
-def score_dialogue(agent, customer, meta: dict) -> tuple[list[dict], dict]:
+def repair_seconds(att: dict, agent, customer, effort: EffortModel) -> tuple[float, int]:
+    """Customer seconds spent on one value's repair: for each repair turn k, hearing
+    the agent's request (agent.turns[k]) and answering it (customer.packages[k])."""
+    secs, chars = 0.0, 0
+    for k in att.get("repair_turns") or []:
+        if k < len(customer.packages):
+            pkg = customer.packages[k]
+            secs += effort.turn_seconds(pkg, agent.turns[k]["text"])
+            chars += pkg.typed_chars or 0
+    return secs, chars
+
+
+def score_dialogue(agent, customer, meta: dict, effort: EffortModel | None = None) -> tuple[list[dict], dict]:
     """Returns (attempt rows, dialogue row). ``meta`` holds run_id, policy,
-    condition, snr_db, ... and is copied into every row."""
+    condition, snr_db, seed, ... and is copied into every row. Effort is in
+    seconds of the customer's time (``effort.EffortModel``)."""
+    effort = effort or EffortModel()
     goal = customer.goal
     rows = []
     for a in agent.attempts:
         true = goal.slots.get(a["slot"])
-        row = {**meta, "dialogue_id": goal.dialogue_id, "seed": goal.seed, "voice": goal.voice,
+        row = {**meta, "dialogue_id": goal.dialogue_id, "goal_seed": goal.seed, "voice": goal.voice,
                "can_type": goal.can_type, **a, "true_value": true, "spurious": true is None,
                "missed": False}
+        row["effort_s"], row["typed_chars"] = repair_seconds(a, agent, customer, effort)
         row["first_correct"] = values_match(a["slot"], a["hypothesis"], true) if true else False
         row["committed_correct"] = (values_match(a["slot"], a["committed_value"], true)
                                     if true and a["committed_value"] is not None else False)
@@ -73,19 +89,19 @@ def score_dialogue(agent, customer, meta: dict) -> tuple[list[dict], dict]:
     heard = {a["slot"] for a in agent.attempts}
     for slot, true in goal.slots.items():           # goal slots the agent never got a value for
         if slot not in heard and slot not in final:
-            rows.append({**meta, "dialogue_id": goal.dialogue_id, "seed": goal.seed,
+            rows.append({**meta, "dialogue_id": goal.dialogue_id, "goal_seed": goal.seed,
                          "voice": goal.voice, "can_type": goal.can_type, "slot": slot,
                          "slot_type": slot_type(slot), "true_value": true, "hypothesis": None,
                          "missed": True, "spurious": False, "first_correct": False,
                          "committed_correct": False, "error_type": "deletion", "mode": None,
-                         "action": None, "effort": 0.0, "features": None})
+                         "action": None, "effort_s": 0.0, "features": None})
 
     per_slot = {s: values_match(s, final.get(s), v) for s, v in goal.slots.items()}
     real = [r for r in rows if not r["missed"] and not r["spurious"]]
     wrong = [r for r in real if r.get("committed_value") is not None and not r["committed_correct"]]
     joint = all(per_slot.values())
     pk = customer.packages
-    dlg = {**meta, "dialogue_id": goal.dialogue_id, "seed": goal.seed, "voice": goal.voice,
+    dlg = {**meta, "dialogue_id": goal.dialogue_id, "goal_seed": goal.seed, "voice": goal.voice,
            "can_type": goal.can_type, "domain": goal.domain, "agent_domain": agent.domain,
            "n_goal_slots": len(goal.slots), "n_turns": len(pk), "ended": customer.done,
            "joint_goal_correct": joint, "task_success": joint and customer.done,
@@ -93,7 +109,9 @@ def score_dialogue(agent, customer, meta: dict) -> tuple[list[dict], dict]:
            "wrong_slots": [s for s, ok in per_slot.items() if not ok],
            "n_wrong_commits": len(wrong),
            "turns_to_first_error": min((r["turn"] for r in wrong), default=None),
-           "total_effort": sum(r.get("effort") or 0.0 for r in rows),
+           "total_effort_s": sum(r.get("effort_s") or 0.0 for r in rows),      # repairs only
+           "total_user_time_s": sum(effort.turn_seconds(p, agent.turns[k]["text"])  # whole call
+                                    for k, p in enumerate(pk) if k < len(agent.turns)),
            "n_confirm": sum(r.get("action") == "confirm" for r in rows),
            "n_spell": sum(p.path == "spell" for p in pk),
            "n_type_requests": sum(p.assistant_action == "type" for p in pk),

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,9 @@ from policy_eval import (observed_crossover, per_dialogue, policies, predicted_c
                          success_effort_auc, success_effort_curve)
 from stats_tests import cluster_bootstrap, holm, paired_bootstrap, paired_permutation
 from u2r import ACTIONS, decision_regions
+
+if hasattr(sys.stdout, "reconfigure"):          # Windows consoles default to cp1252 and cannot print → or Δ
+    sys.stdout.reconfigure(encoding="utf-8")
 
 OUT = "demo_output"
 os.makedirs(OUT, exist_ok=True)

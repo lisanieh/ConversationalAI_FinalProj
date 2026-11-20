@@ -49,7 +49,10 @@ class U2RAgent:
         self.rules = RuleExtractor()
         self.estimator, self.llm, self.ask_llm, self.max_asks = estimator, llm, ask_llm, max_asks
         self.domain: str | None = None
-        self.state: dict[str, str] = {}
+        self.state: dict[str, str] = {}              # includes values still waiting for a repair answer
+        self.committed: dict[str, str] = {}          # only values the agent has settled on
+        self.turn_log: list[dict] = []               # per customer turn: committed state and new commits
+        self._commits_now: dict[str, str] = {}
         self.attempts: list[dict] = []
         self.queue: list[Pending] = []
         self.pending: Pending | None = None          # what the last agent turn asked
@@ -62,6 +65,9 @@ class U2RAgent:
     def step(self, heard: Heard | None) -> dict:
         if heard is not None:
             self._hear(heard)
+            self.turn_log.append({"turn": heard.turn, "belief": dict(self.committed),
+                                  "commits": self._commits_now})
+            self._commits_now = {}
         out = self._next()
         self.turns.append(out)
         return out
@@ -76,7 +82,8 @@ class U2RAgent:
             if p is not None and p.action == "ask_type" and heard.mode == "typed":
                 att = self._new_value(p.slot, heard.text, heard)
                 if att is not None:                  # typing was the first channel, not a repair
-                    att.update(action="type", repair_channel="ask_type", effort=EFFORT["type"])
+                    att.update(action="type", repair_channel="ask_type",
+                               effort_prior_s=EFFORT["type"], repair_turns=[heard.turn])
                 return
             self._take_in(heard, asked=p.slot if p else None)
         else:
@@ -98,7 +105,7 @@ class U2RAgent:
         if not hyp:
             return None
         if hyp == DONTCARE:
-            self.state[slot] = DONTCARE
+            self.state[slot] = self.committed[slot] = DONTCARE
             return None
         if self.state.get(slot) == hyp:
             return None                               # repeated, nothing new
@@ -107,7 +114,8 @@ class U2RAgent:
                "raw": raw, "hypothesis": hyp, "transcript": heard.text,
                "features": None, "p_hat": None, "llm_p_wrong": None, "expected_costs": None,
                "action": "accept", "repair_channel": "", "repair_received": None,
-               "committed_value": None, "effort": 0.0, "extra_turns": 0}
+               "committed_value": None, "effort_prior_s": 0.0, "extra_turns": 0,
+               "repair_turns": []}
         self.attempts.append(att)
         if heard.mode == "typed":
             self._commit(att, hyp)
@@ -139,7 +147,8 @@ class U2RAgent:
     def _resolve(self, p: Pending, heard: Heard) -> None:
         att = p.attempt
         att["extra_turns"] += 1
-        att["effort"] += EFFORT[p.action]
+        att["repair_turns"].append(heard.turn)
+        att["effort_prior_s"] += EFFORT[p.action]
         att["repair_received"] = heard.text
         hyp = att["hypothesis"]
 
@@ -169,7 +178,8 @@ class U2RAgent:
 
     def _commit(self, att: dict, value: str) -> None:
         att["committed_value"] = value
-        self.state[att["slot"]] = value
+        self.state[att["slot"]] = self.committed[att["slot"]] = value
+        self._commits_now[att["slot"]] = value
 
     # ============================================================ next turn
     def _next(self) -> dict:

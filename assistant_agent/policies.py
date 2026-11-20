@@ -13,7 +13,9 @@ Policy specs (``run_agent.py --policies``):
   typed                              ask every slot by typing from the start (typed baseline)
   threshold[:<tau>]                  low raw confidence -> type (Bell et al., 2000 style)
   llm                                the LLM picks the repair (CHOOSE prompt)
-  u2r | u2r:<C_w> | u2r-notype       the method; C_w sweep; ablation without TYPE
+  u2r | u2r:<C_w> | u2r-notype       the method; C_w sweep (seconds); ablation without TYPE
+
+c_a and C_w are both in seconds of the customer's time (see config.py).
 """
 
 from __future__ import annotations
@@ -63,11 +65,16 @@ class U2R(Policy):
         self.outcomes, self.C_w, self.effort = outcomes, C_w, effort or EFFORT
         self.actions, self.name = tuple(actions), name
 
+    def c(self, action: str, slot_type: str) -> float:
+        """c_a in seconds: measured in the fit phase if available, else the prior."""
+        measured = self.outcomes.cost(action, slot_type)
+        return self.effort[action] if measured is None else measured
+
     def expected_costs(self, p: float, slot_type: str) -> dict[str, float]:
         costs = {}
         for a in self.actions:
             r, e = self.outcomes.get(a, slot_type)
-            costs[a] = self.effort[a] + p * (1 - r) * self.C_w + (1 - p) * e * self.C_w
+            costs[a] = self.c(a, slot_type) + p * (1 - r) * self.C_w + (1 - p) * e * self.C_w
         return costs
 
     def choose(self, ctx):
@@ -84,8 +91,18 @@ class U2R(Policy):
         denom = (rT - rS) + (eT - eS)
         if abs(denom) < 1e-9:
             return None
-        p = ((self.effort["type"] - self.effort["spell"]) / self.C_w + (eT - eS)) / denom
+        p = ((self.c("type", slot_type) - self.c("spell", slot_type)) / self.C_w + (eT - eS)) / denom
         return p if 0 <= p <= 1 else None          # None: one action wins everywhere
+
+
+class ForcedFor(Policy):
+    """Save-point replays: force ``action`` for one slot, accept everything else."""
+
+    def __init__(self, slot: str, action: str):
+        self.slot, self.action, self.name = slot, action, f"replay:{action}"
+
+    def choose(self, ctx):
+        return self.action if ctx["slot"] == self.slot else "accept"
 
 
 def make_policy(spec: str, outcomes: RepairOutcomeModel | None = None) -> Policy:
