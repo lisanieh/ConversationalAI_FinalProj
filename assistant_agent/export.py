@@ -31,6 +31,7 @@ import argparse
 import importlib.util
 import json
 import math
+import sys
 from pathlib import Path
 
 from .scoring import repair_seconds
@@ -46,6 +47,7 @@ def _label_slot():
     if _align is None and _ALIGN.exists():
         spec = importlib.util.spec_from_file_location("error_scripts_align", _ALIGN)
         _align = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = _align          # dataclasses in align.py need the module registered
         spec.loader.exec_module(_align)
     return _align.label_slot if _align else None
 
@@ -122,8 +124,10 @@ def slot_rows(attempt_rows: list[dict], customer) -> list[dict]:
                "condition": condition_name(r["condition"], r.get("snr_db")), "policy": policy_name(r["policy"]),
                "turn": k, "slot": r["slot"], "slot_type": r["slot_type"], "ref_text": ref_text,
                "transcript": r.get("transcript") or "", "ref_value": ref_v, "hyp_value": hyp_v,
-               "p_hat": r.get("p_hat"), "p_llm": r.get("llm_p_wrong"), "missed": r["missed"],
+               "p_hat": r.get("p_hat"), "missed": r["missed"],
                "action": (r.get("action") or "").upper() or None}
+        if r.get("llm_p_wrong") is not None:             # evaluate.py scores p_llm whenever the column exists
+            row["p_llm"] = r["llm_p_wrong"]
         f = r.get("features") or {}
         for key, v in f.items():
             row[FEATURE_NAMES.get(key, key)] = v

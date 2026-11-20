@@ -110,6 +110,18 @@ class ScriptedBrain:
         "name": "It's {v}.", "email": "My email is {v}.", "phone": "My number is {v}.",
     }
 
+    @staticmethod
+    def opener(goal: Goal) -> str:
+        """General request from whatever the goal has (MultiWOZ goals often lack area/type/food)."""
+        s = goal.slots
+        if goal.domain == "hotel":
+            what = f"a {s['type']}" if "type" in s else "a place to stay"
+        else:
+            what = f"a table at a {s['food']} place" if "food" in s else "a table at a restaurant"
+        where = f" in the {s['area']}" if "area" in s else ""
+        verb = "I'm looking for" if goal.domain == "hotel" else "I'd like to book"
+        return f"Hi, {verb} {what}{where}."
+
     def __init__(self):
         self.asked_slot: str | None = None
         self.asked_action: str = "normal"
@@ -118,7 +130,7 @@ class ScriptedBrain:
         last = history[-1]["text"].lower() if history else ""
         customer_turns = sum(h["speaker"] == "customer" for h in history)
         if customer_turns == 0:
-            return self.OPENERS[goal.domain].format(**goal.slots)
+            return self.opener(goal)
         if "booked" in last or "booking is confirmed" in last:
             return f"Great, thank you so much! {DONE_TOKEN}"
         slot = self.asked_slot
