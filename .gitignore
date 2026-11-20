@@ -1,12 +1,11 @@
-# Not code
-*.pdf
-pace/
-runs/
-logs/
-
-# Python cache
+﻿*.wav
+*.mp3
+*.flac
+*.tar.gz
+*.zip
+datasets/musan/
+datasets/spokenwoz/test_audio/
+raw_tts/
+mixed_audio/
 __pycache__/
 *.pyc
-
-# Audio made by TTS
-*.wav
