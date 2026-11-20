@@ -36,6 +36,12 @@ _NAME_RE = re.compile(r"(?:my name is|my name's|name is|the name is|it's|it is|t
 _NAME_STOP = {"please", "thanks", "thank", "and", "the", "my", "it", "is", "that"}
 _NOT_NAME = {"yes", "no", "not", "that's", "wrong", "right", "correct", "sorry", "it", "it's", "is",
              "the", "i", "i'm", "can't", "what", "pardon", "again", "preference"}
+# MultiWOZ restaurant foods (datasets/multiwoz/db/restaurant_db.json) plus the ontology sampler's.
+MULTIWOZ_FOODS = ["african", "asian oriental", "british", "chinese", "european", "french", "gastropub",
+                  "indian", "international", "italian", "japanese", "korean", "lebanese", "mediterranean",
+                  "mexican", "modern european", "north american", "portuguese", "seafood", "spanish",
+                  "thai", "turkish", "vietnamese"]
+FOOD_TERMS = sorted(set(FOODS) | set(MULTIWOZ_FOODS), key=len, reverse=True)
 _HOTEL_WORDS = r"\b(hotel|guesthouse|guest house|stay|nights?|room|accommodation)\b"
 _REST_WORDS = r"\b(restaurant|table|food|eat|dinner|lunch|cuisine)\b"
 
@@ -76,7 +82,9 @@ class RuleExtractor:
             return dom, {asked_slot: DONTCARE}
 
         # Ontology words are safe to pick up whether or not they were asked for.
-        area = _first(re.sub(r"\b(city )?(center|central)\b", "centre", low), AREAS)
+        food = _first(low, FOOD_TERMS)
+        no_food = low.replace(food, " ") if food else low      # "north american" is not area "north"
+        area = _first(re.sub(r"\b(city )?(center|central)\b", "centre", no_food), AREAS)
         if area:
             out["area"] = area
         price = _first(re.sub(r"\binexpensive\b", "cheap", low), PRICE_RANGES + ["moderately"])
@@ -87,7 +95,6 @@ class RuleExtractor:
         elif re.search(r"\bhotel\b", low) and (asked_slot == "type"
                                               or re.search(r"\b(a|an)\s+(\w+\s+)?hotel\b", low)):
             out["type"] = "hotel"
-        food = _first(low, FOODS)
         if food:
             out["food"] = food
         elif asked_slot == "food":

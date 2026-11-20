@@ -101,6 +101,97 @@ def load_multiwoz_goals(path: str | Path, domains=("hotel", "restaurant")) -> li
     return out
 
 
+# MultiWOZ 2.2 slot names ("hotel-bookday") -> our slot names ("day").
+_MWZ22_SLOT = {"area": "area", "pricerange": "pricerange", "type": "type", "food": "food",
+               "bookday": "day", "bookpeople": "people", "bookstay": "stay", "booktime": "time"}
+
+
+def _goal_from_state(source: str, dom: str, slot_values: dict) -> dict | None:
+    """slot_values: {"hotel-bookday": ["saturday"], ...} (2.2 keeps several surface forms; take the first)."""
+    slots = {}
+    for src, ours in _MWZ22_SLOT.items():
+        vals = slot_values.get(f"{dom}-{src}")
+        v = vals[0] if isinstance(vals, list) and vals else vals
+        if ours in DOMAIN_SLOTS[dom] and v not in (None, "", "dontcare", "none"):
+            slots[ours] = _normalize(str(v)).replace("guest house", "guesthouse")
+    if not {"day", "people"} <= slots.keys():
+        return None
+    return {"source": source, "domain": dom, "slots": {k: slots[k] for k in DOMAIN_SLOTS[dom] if k in slots}}
+
+
+def _user_states_original(dial: dict) -> tuple[str, list[str], list[tuple[str, dict]]]:
+    """Original MultiWOZ 2.2 release (datasets/multiwoz/data/MultiWOZ_2.2/<split>/dialogues_*.json)."""
+    states = [(fr["service"], fr["state"]["slot_values"])
+              for t in dial["turns"] if t["speaker"] == "USER"
+              for fr in t.get("frames", []) if "state" in fr]
+    return dial["dialogue_id"], dial.get("services", []), states
+
+
+def _user_states_hf(dial: dict) -> tuple[str, list[str], list[tuple[str, dict]]]:
+    """Hugging Face export (download_datasets.py, pfb30/multi_woz_v22): turns are column lists,
+    speaker 0 = USER, and each state stores slots_values as name / list columns."""
+    turns, states = dial["turns"], []
+    for spk, frames in zip(turns["speaker"], turns["frames"]):
+        if spk not in (0, "USER"):
+            continue
+        for service, st in zip(frames.get("service", []), frames.get("state", [])):
+            sv = st.get("slots_values") or {}
+            states.append((service, dict(zip(sv.get("slots_values_name", []), sv.get("slots_values_list", [])))))
+    return dial["dialogue_id"], dial.get("services", []), states
+
+
+def _read_dialogues(path: Path):
+    """Yield (parser, dialogue) from a 2.2 file in either layout (JSON list or JSON lines)."""
+    text = path.read_text(encoding="utf-8")
+    try:
+        data = json.loads(text)
+        rows = data if isinstance(data, list) else [data]
+    except json.JSONDecodeError:
+        rows = [json.loads(line) for line in text.splitlines() if line.strip()]
+    for d in rows:
+        yield (_user_states_hf if isinstance(d.get("turns"), dict) else _user_states_original), d
+
+
+def load_multiwoz22_goals(path: str | Path, domains=("hotel", "restaurant")) -> list[dict]:
+    """Booking goals from MultiWOZ 2.2 = the user's FINAL dialogue state per domain.
+
+    ``path`` is a split folder (``.../MultiWOZ_2.2/train``), the whole release
+    folder (all splits), a single ``dialogues_*.json``, or the JSON-lines file
+    written by download_datasets.py. One goal per dialogue (its first booked
+    hotel/restaurant domain), keeping only goals with a day and a party size.
+    """
+    path = Path(path)
+    files = sorted(path.rglob("dialogues_*.json")) if path.is_dir() else [path]
+    if path.is_dir() and not files:
+        files = sorted(path.rglob("*.json"))
+    out = []
+    for f in files:
+        for parse, dial in _read_dialogues(f):
+            did, services, states = parse(dial)
+            final: dict[str, dict] = {}
+            for service, sv in states:                    # later turns overwrite earlier ones
+                if service in domains:
+                    final[service] = sv
+            for dom in [s for s in services if s in domains] or list(final):
+                g = _goal_from_state(f"multiwoz22:{did}", dom, final.get(dom, {}))
+                if g:
+                    out.append(g)
+                    break
+    return out
+
+
+def load_goals(path: str | Path) -> list[dict]:
+    """Detect the MultiWOZ version: 2.1 (one data.json with a "goal" per dialogue) or 2.2."""
+    path = Path(path)
+    if path.is_file() and path.name == "data.json":
+        return load_multiwoz_goals(path)
+    if path.is_file():
+        head = path.read_text(encoding="utf-8")[:4000].lstrip()
+        if head.startswith("{") and '"goal"' in head:
+            return load_multiwoz_goals(path)
+    return load_multiwoz22_goals(path)
+
+
 def _sample_ontology_goal(rng: random.Random) -> dict:
     domain = rng.choice(["hotel", "restaurant"])
     slots = {
@@ -151,7 +242,9 @@ class GoalBuilder:
     def __init__(self, multiwoz_path: str | Path | None = None,
                  cannot_type_rate: float = 0.20,
                  voices: list[str] | None = None):
-        self.pool = load_multiwoz_goals(multiwoz_path) if multiwoz_path else None
+        self.pool = load_goals(multiwoz_path) if multiwoz_path else None
+        if self.pool is not None and not self.pool:
+            raise ValueError(f"no hotel/restaurant booking goals found in {multiwoz_path}")
         self.cannot_type_rate = cannot_type_rate
         self.voices = voices or DEFAULT_VOICES
 

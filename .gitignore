@@ -15,3 +15,14 @@ __pycache__/
 # Trained estimator / outcome tables
 models/
 
+
+# Experiment outputs (restored after the audio merge)
+*.pdf
+pace/
+runs/
+logs/
+manifests/
+results/
+error_scripts/demo_output/
+error_scripts/fake/
+error_scripts/fake_results/

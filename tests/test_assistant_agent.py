@@ -127,8 +127,10 @@ class TestPolicies(unittest.TestCase):
         self.assertNotEqual(u.choose({"p_hat": 0.9, "slot_type": "name", "can_type": False}), "type")
 
     def test_p_star_is_the_crossing(self):
-        u = U2R(RepairOutcomeModel(self.TABLE))
+        u = U2R(RepairOutcomeModel(self.TABLE), C_w=20.0)    # with C_w = 60 s TYPE beats SPELL everywhere
         p = u.p_star("name")
+        self.assertIsNotNone(p)
+        self.assertIsNone(U2R(RepairOutcomeModel(self.TABLE)).p_star("name"))
         c = u.expected_costs(p, "name")
         self.assertAlmostEqual(c["spell"], c["type"], places=9)
 
@@ -250,6 +252,111 @@ class TestAgentDialogues(unittest.TestCase):
         self.assertIsNone(slot_features(Heard("x", mode="typed"), "x"))
 
 
+class TestMultiWOZ22Goals(unittest.TestCase):
+    ORIGINAL = [{"dialogue_id": "PMUL1.json", "services": ["restaurant", "hotel"], "turns": [
+        {"speaker": "USER", "utterance": "...", "frames": [
+            {"service": "hotel", "state": {"slot_values": {"hotel-area": ["north"], "hotel-bookday": ["friday"]}}}]},
+        {"speaker": "SYSTEM", "utterance": "...", "frames": [{"service": "hotel"}]},
+        {"speaker": "USER", "utterance": "...", "frames": [
+            {"service": "restaurant", "state": {"slot_values": {}}},
+            {"service": "hotel", "state": {"slot_values": {
+                "hotel-area": ["north"], "hotel-bookday": ["saturday"], "hotel-bookpeople": ["2"],
+                "hotel-type": ["guest house"], "hotel-name": ["acorn guest house"],
+                "hotel-pricerange": ["dontcare"]}}}]}]}]
+    HF = {"dialogue_id": "SNG2.json", "services": ["restaurant"], "turns": {
+        "speaker": [0, 1, 0], "utterance": ["a", "b", "c"],
+        "frames": [{"service": ["restaurant"], "state": [{"slots_values": {
+                        "slots_values_name": ["restaurant-food"], "slots_values_list": [["thai"]]}}]},
+                   {"service": [], "state": []},
+                   {"service": ["restaurant"], "state": [{"slots_values": {
+                        "slots_values_name": ["restaurant-food", "restaurant-bookday", "restaurant-bookpeople",
+                                              "restaurant-booktime"],
+                        "slots_values_list": [["thai"], ["monday"], ["4"], ["19:30"]]}}]}]}}
+
+    def test_both_layouts(self):
+        from robot_customer.goal_builder import load_goals
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "train").mkdir()
+            (Path(d) / "train" / "dialogues_001.json").write_text(json.dumps(self.ORIGINAL))
+            (Path(d) / "hf.json").write_text(json.dumps(self.HF) + "\n")
+            g = load_goals(Path(d) / "train")
+            self.assertEqual(g, [{"source": "multiwoz22:PMUL1.json", "domain": "hotel",
+                                  "slots": {"area": "north", "type": "guesthouse", "day": "saturday",
+                                            "people": "2"}}])           # final state; dontcare dropped
+            g = load_goals(Path(d) / "hf.json")
+            self.assertEqual(g[0]["slots"], {"food": "thai", "day": "monday", "people": "4", "time": "19:30"})
+
+    def test_real_files_if_present(self):
+        from robot_customer.goal_builder import load_goals
+        test = Path(__file__).resolve().parents[1] / "datasets/multiwoz/data/MultiWOZ_2.2/test"
+        if not test.exists():
+            self.skipTest("MultiWOZ 2.2 not downloaded")
+        goals = load_goals(test)
+        self.assertGreater(len(goals), 400)
+        for seed in range(15):                 # every goal shape must run end to end
+            goal = GoalBuilder(test).build(seed)
+            customer = RobotCustomer(goal, ScriptedBrain())
+            agent = U2RAgent(make_policy("accept"), RuleExtractor())
+            ch = TextChannel()
+            run_dialogue(customer, lambda pkg: agent.step(ch(pkg) if pkg else None), max_turns=40)
+            self.assertTrue(score_dialogue(agent, customer, {"policy": "accept"})[1]["task_success"],
+                            (seed, goal.slots, agent.final_state()))
+
+
+class TestAudioChannelWiring(unittest.TestCase):
+    """AudioChannel with stand-in TTS / Whisper (no models): hook, cache, replay safety."""
+
+    class FakeTTS:
+        def __init__(self):
+            self.cache, self.calls = {}, 0
+
+        def synth(self, text, voice):
+            self.calls += 1
+            return [0.1] * (1600 * max(1, len(text.split())))
+
+        def __call__(self, text, voice, out_path):
+            self.cache[str(out_path)] = self.synth(text, voice)
+            return len(self.cache[str(out_path)]) / 16000
+
+        def __deepcopy__(self, memo):
+            return self
+
+    class FakeASR:
+        def __init__(self):
+            self.seen = []
+
+        def recognize(self, audio, seed=0):
+            self.seen.append((len(audio), seed))
+            return {"text": "It's Varun Kamath.", "words": [("It's", .9), ("Varun", .4), ("Kamath", .3)],
+                    "samples": ["It's Varun Kamath."] * 3, "no_speech_prob": .01,
+                    "compression_ratio": 1.1, "avg_logprob": -0.3}
+
+        def __deepcopy__(self, memo):
+            return self
+
+    def test_turn_flow_and_replay_copy(self):
+        import copy
+        from unittest import mock
+        from assistant_agent import audio as audio_mod
+        tts, asr = self.FakeTTS(), self.FakeASR()
+        with mock.patch.object(audio_mod, "_load_script") as ls:
+            ls.return_value.estimate_blind_snr = lambda a: 25.0
+            ch = audio_mod.AudioChannel(tts, asr, None, "clean", None, seed=3)
+            goal = GoalBuilder().build(1)
+            customer = RobotCustomer(goal, ScriptedBrain(), tts=tts)
+            pkg = customer.respond({"text": "Can I have your name?", "action": "normal", "slot": "name"})
+            self.assertGreater(pkg.audio_seconds, 0)                  # hook filled the length
+            h = ch(pkg)
+            self.assertEqual(tts.calls, 1)                            # reused the hook's audio
+            self.assertEqual((h.text, h.snr_est, len(h.samples)), ("It's Varun Kamath.", 25.0, 3))
+            twin = copy.deepcopy(ch)
+            self.assertIs(twin.asr, asr)                              # models shared, not copied
+            ch(pkg), twin(pkg)
+            self.assertEqual(asr.seen[-1], asr.seen[-2])              # same random state -> same decode
+        with self.assertRaises(ValueError):
+            audio_mod.AudioChannel(tts, asr, None, "music", 5)        # noise needs MUSAN
+
+
 class TestEndToEnd(unittest.TestCase):
     def test_fit_train_eval(self):
         import contextlib
@@ -259,15 +366,34 @@ class TestEndToEnd(unittest.TestCase):
         from assistant_agent import train
         with tempfile.TemporaryDirectory() as d, contextlib.redirect_stdout(io.StringIO()):
             common = ["--channel", "mock", "--n", "6", "--out", f"{d}/runs"]
-            run_agent.main(["--phase", "fit", "--conditions", "clean", "noise:5",
+            run_agent.main(["--phase", "fit", "--conditions", "clean", "noise:5", "--seeds", "0", "1",
                             "--logdir", f"{d}/fit", *common])
-            train.main(["--attempts", f"{d}/fit/attempts.jsonl", "--out", f"{d}/models", "--min-n", "5"])
+            train.main(["--attempts", f"{d}/fit/attempts.jsonl", "--replays", f"{d}/fit/replays.jsonl",
+                        "--out", f"{d}/models", "--min-n", "5"])
             run_agent.main(["--policies", "u2r", "accept", "--conditions", "music:5", "--logdir", f"{d}/eval",
                             "--estimator", f"{d}/models/estimator.json",
                             "--outcomes", f"{d}/models/outcomes.json", *common])
             dlg = [json.loads(line) for line in open(f"{d}/eval/dialogues.jsonl")]
             self.assertEqual(len(dlg), 12)
             self.assertTrue((Path(d) / "eval" / "agent_prompts.txt").exists())
+            # replays: every row has all four paired outcomes, in seconds
+            reps = [json.loads(line) for line in open(f"{d}/fit/replays.jsonl")]
+            self.assertTrue(reps)
+            for r in reps:
+                for A in ("ACCEPT", "CONFIRM", "SPELL", "TYPE"):
+                    self.assertIn(r[f"final_wrong_{A}"], (0, 1))
+                    self.assertGreaterEqual(r[f"effort_{A}"], 0.0)
+                self.assertEqual(r["final_wrong_ACCEPT"], r["y"])
+            self.assertEqual({json.loads(l)["seed"] for l in open(f"{d}/fit/dialogues.jsonl")}, {0, 1})
+            # export for error_scripts
+            fe = Path(d) / "eval" / "for_eval"
+            goals = json.loads((fe / "goals.json").read_text())
+            turns = [json.loads(l) for l in open(fe / "eval_turns.jsonl")]
+            slots = [json.loads(l) for l in open(fe / "eval_slots.jsonl")]
+            self.assertEqual({t["dialogue_id"] for t in turns}, set(goals))
+            self.assertEqual({t["policy"] for t in turns}, {"U2R", "no_repair"})
+            self.assertEqual({t["condition"] for t in turns}, {"music_5"})
+            self.assertTrue(all(s["y"] in (0, 1) and s["error_type"] for s in slots))
 
 
 if __name__ == "__main__":

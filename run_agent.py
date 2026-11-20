@@ -20,7 +20,12 @@ Real models: customer on Qwen, agent on Llama (two vLLM servers on one node):
   vllm serve meta-llama/Llama-3.1-8B-Instruct  --port 8001 --gpu-memory-utilization 0.3
   python run_agent.py --brain llm --customer-url http://localhost:8000/v1 \
          --agent-extractor llm --agent-url http://localhost:8001/v1 ...
-The Whisper channel plugs in through assistant_agent.channel.ASRChannel.
+
+Real audio (Kokoro TTS -> MUSAN noise -> Whisper, assistant_agent/audio.py):
+  python run_agent.py --channel whisper --musan datasets/musan --whisper-model small.en --K 5          --multiwoz datasets/multiwoz/data/MultiWOZ_2.2/train --phase fit ...
+Goals: --multiwoz takes MultiWOZ 2.2 (a split folder, the release folder, or the
+download_datasets.py JSON) or 2.1 (data.json); without it, goals are sampled
+from the ontology. Use train goals for the fit phase and test goals for eval.
 
 Design
   * --n goals x --seeds runs. A goal (dialogue_id) is the same under every
@@ -55,7 +60,7 @@ from robot_customer import GoalBuilder, LLMBrain, RobotCustomer, ScriptedBrain
 
 PHASES = {
     # fit: clean + noise -> training data for the estimator, and save-point replays for r/e/c
-    "fit": dict(policies=["accept"], conditions=["clean", "noise:20", "noise:10", "noise:5", "noise:0"],
+    "fit": dict(policies=["accept"], conditions=["clean", "noise:20", "noise:15", "noise:10", "noise:5"],
                 replay=True),
     # eval: every policy on HELD-OUT conditions (never used for fitting). C_w sweep in seconds.
     "eval": dict(policies=["typed", "accept", "confirm", "spell", "type", "threshold:-0.5",
@@ -74,13 +79,24 @@ def run_seed_of(goal_seed: int, run_seed: int) -> int:
     return goal_seed * 1009 + run_seed
 
 
-def make_channel(kind: str, condition: str, snr: float | None, seed: int):
+def make_audio(a) -> dict:
+    """Load Kokoro, Whisper and MUSAN once per run (GPU node)."""
+    from assistant_agent.audio import KokoroTTS, NoiseMixer, WhisperASR
+    save = Path(a.save_audio) if a.save_audio else None
+    tts = KokoroTTS(device=a.audio_device, save_dir=save / "clean" if save else None)
+    asr = WhisperASR(a.whisper_model, device=a.audio_device, K=a.K, sample_temperature=a.sample_temperature)
+    mixer = NoiseMixer(a.musan) if a.musan else None
+    return {"tts": tts, "asr": asr, "mixer": mixer, "save_dir": save}
+
+
+def make_channel(kind: str, condition: str, snr: float | None, seed: int, audio: dict | None = None):
     if kind == "text":
         return TextChannel()
     if kind == "mock":
         return MockASRChannel(condition, snr, seed=seed)
-    raise SystemExit("--channel whisper: wrap the audio step in assistant_agent.channel.ASRChannel "
-                     "and pass it here (see assistant_agent/README.md)")
+    from assistant_agent.audio import AudioChannel
+    return AudioChannel(audio["tts"], audio["asr"], audio["mixer"], condition, snr, seed=seed,
+                        save_dir=audio["save_dir"])
 
 
 def show(customer, agent, dlg) -> None:
@@ -103,6 +119,53 @@ def show(customer, agent, dlg) -> None:
           f"call={dlg['total_user_time_s']:.0f}s wrong={dlg['wrong_slots']}")
 
 
+def run_all(a, conditions, policies, builder, estimator, outcomes, effort, needs_llm, do_replay,
+            logdir, files, writer, summary, audio=None) -> None:
+    f_att, f_dlg, f_rep = files
+    for cond in conditions:
+        cname, snr = parse_condition(cond)
+        for spec in policies:
+            for run_seed in a.seeds:
+                for gs in range(a.first_goal, a.first_goal + a.n):
+                    goal = builder.build(gs)
+                    rs = run_seed_of(gs, run_seed)
+                    brain = (ScriptedBrain() if a.brain == "scripted" else
+                             LLMBrain(a.customer_url, a.customer_model, seed=rs))
+                    out_dir = (None if a.no_save_dialogues else
+                               Path(a.out) / spec.replace(":", "_") / cond.replace(":", "_") / f"seed{run_seed}")
+                    customer = RobotCustomer(goal, brain, typo_rate=a.typo_rate, out_dir=out_dir,
+                                             run_seed=run_seed, tts=audio["tts"] if audio else None)
+                    llm = ChatLLM(a.agent_url, a.agent_model, seed=rs) if needs_llm else None
+                    extractor = LLMExtractor(llm) if a.agent_extractor == "llm" else RuleExtractor()
+                    agent = U2RAgent(make_policy(spec, outcomes), extractor, estimator, llm, ask_llm=a.ask_llm)
+                    channel = make_channel(a.channel, cname, snr, rs, audio)
+                    meta = {"run_id": logdir.name, "policy": spec, "condition": cname, "snr_db": snr,
+                            "channel": a.channel, "seed": run_seed}
+
+                    replays: list[dict] = []
+                    hook = ((lambda pkg: replays.extend(replay_turn(customer, agent, channel, pkg, effort, meta)))
+                            if do_replay else None)
+                    drive(customer, agent, channel, max_turns=a.max_turns, on_turn=hook)
+
+                    rows, dlg = score_dialogue(agent, customer, meta, effort)
+                    for r in rows:
+                        f_att.write(json.dumps(r, ensure_ascii=False) + "\n")
+                    f_dlg.write(json.dumps(dlg, ensure_ascii=False) + "\n")
+                    for r in replays:
+                        f_rep.write(json.dumps(r, ensure_ascii=False) + "\n")
+                    writer.add(agent, customer, meta, effort, rows, replays)
+                    if out_dir is not None:
+                        customer.save(final_state=agent.final_state())
+                    s = summary.setdefault((cond, spec), [0, 0, 0.0, 0, 0])
+                    s[0] += dlg["task_success"]
+                    s[1] += dlg["n_wrong_commits"]
+                    s[2] += dlg["total_effort_s"]
+                    s[3] += 1
+                    s[4] += len(replays)
+                    if a.show:
+                        show(customer, agent, dlg)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--phase", choices=list(PHASES), default=None)
@@ -115,11 +178,19 @@ def main(argv=None):
     ap.add_argument("--replay", dest="replay", action="store_true", default=None,
                     help="save-point replays of all four repairs (default: on for --phase fit)")
     ap.add_argument("--no-replay", dest="replay", action="store_false")
-    ap.add_argument("--multiwoz", default=None)
+    ap.add_argument("--multiwoz", default=None,
+                    help="MultiWOZ 2.2 split folder / release folder / HF json, or 2.1 data.json")
     ap.add_argument("--cannot-type-rate", type=float, default=0.20)
     ap.add_argument("--typo-rate", type=float, default=0.02)
     ap.add_argument("--max-turns", type=int, default=40)
     ap.add_argument("--effort", default=None, help="effort model JSON (python -m assistant_agent.effort)")
+    # audio (--channel whisper)
+    ap.add_argument("--musan", default="datasets/musan", help="MUSAN root with noise/ music/ speech/")
+    ap.add_argument("--whisper-model", default="small.en")
+    ap.add_argument("--K", type=int, default=5, help="sampled Whisper transcripts per turn (agreement)")
+    ap.add_argument("--sample-temperature", type=float, default=0.7)
+    ap.add_argument("--audio-device", default=None, help="cuda | cpu (default: cuda if available)")
+    ap.add_argument("--save-audio", default=None, help="folder to keep clean and mixed WAVs")
     # customer
     ap.add_argument("--brain", choices=["scripted", "llm"], default="scripted")
     ap.add_argument("--customer-url", default="http://localhost:11434/v1")
@@ -162,52 +233,19 @@ def main(argv=None):
     writer = EvalWriter(logdir / "for_eval")
 
     builder = GoalBuilder(multiwoz_path=a.multiwoz, cannot_type_rate=a.cannot_type_rate)
-    summary = {}
-    for cond in conditions:
-        cname, snr = parse_condition(cond)
-        for spec in policies:
-            for run_seed in a.seeds:
-                for gs in range(a.first_goal, a.first_goal + a.n):
-                    goal = builder.build(gs)
-                    rs = run_seed_of(gs, run_seed)
-                    brain = (ScriptedBrain() if a.brain == "scripted" else
-                             LLMBrain(a.customer_url, a.customer_model, seed=rs))
-                    out_dir = (None if a.no_save_dialogues else
-                               Path(a.out) / spec.replace(":", "_") / cond.replace(":", "_") / f"seed{run_seed}")
-                    customer = RobotCustomer(goal, brain, typo_rate=a.typo_rate, out_dir=out_dir,
-                                             run_seed=run_seed)
-                    llm = ChatLLM(a.agent_url, a.agent_model, seed=rs) if needs_llm else None
-                    extractor = LLMExtractor(llm) if a.agent_extractor == "llm" else RuleExtractor()
-                    agent = U2RAgent(make_policy(spec, outcomes), extractor, estimator, llm, ask_llm=a.ask_llm)
-                    channel = make_channel(a.channel, cname, snr, rs)
-                    meta = {"run_id": logdir.name, "policy": spec, "condition": cname, "snr_db": snr,
-                            "channel": a.channel, "seed": run_seed}
-
-                    replays: list[dict] = []
-                    hook = ((lambda pkg: replays.extend(replay_turn(customer, agent, channel, pkg, effort, meta)))
-                            if do_replay else None)
-                    drive(customer, agent, channel, max_turns=a.max_turns, on_turn=hook)
-
-                    rows, dlg = score_dialogue(agent, customer, meta, effort)
-                    for r in rows:
-                        f_att.write(json.dumps(r, ensure_ascii=False) + "\n")
-                    f_dlg.write(json.dumps(dlg, ensure_ascii=False) + "\n")
-                    for r in replays:
-                        f_rep.write(json.dumps(r, ensure_ascii=False) + "\n")
-                    writer.add(agent, customer, meta, effort, rows, replays)
-                    if out_dir is not None:
-                        customer.save(final_state=agent.final_state())
-                    s = summary.setdefault((cond, spec), [0, 0, 0.0, 0, 0])
-                    s[0] += dlg["task_success"]
-                    s[1] += dlg["n_wrong_commits"]
-                    s[2] += dlg["total_effort_s"]
-                    s[3] += 1
-                    s[4] += len(replays)
-                    if a.show:
-                        show(customer, agent, dlg)
-    for f in (f_att, f_dlg, f_rep):
-        f.close()
-    writer.close()
+    summary: dict = {}
+    audio = None
+    if a.channel == "whisper":
+        if all(c.split(":")[0] == "clean" for c in conditions):
+            a.musan = None                      # no noise needed
+        audio = make_audio(a)
+    try:
+        run_all(a, conditions, policies, builder, estimator, outcomes, effort, needs_llm, do_replay,
+                logdir, (f_att, f_dlg, f_rep), writer, summary, audio)
+    finally:                                   # close the logs even if a dialogue crashes
+        for f in (f_att, f_dlg, f_rep):
+            f.close()
+        writer.close()
 
     print(f"\n{'condition':12s} {'policy':16s} {'success':>8s} {'wrong/dlg':>10s} {'repair s/dlg':>13s}"
           + ("  replayed values" if do_replay else ""))
