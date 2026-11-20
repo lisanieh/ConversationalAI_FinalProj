@@ -32,7 +32,8 @@ class TurnPackage:
     typo_edits: list[dict] = field(default_factory=list)
 
     voice: str | None = None
-    seed: int | None = None
+    seed: int | None = None           # goal seed
+    run_seed: int = 0                 # repetition of the same goal
     audio_file: str | None = None     # suggested path; written by the TTS step
     audio_seconds: float | None = None  # filled by the TTS step
     typed_chars: int | None = None    # effort proxy for typed turns

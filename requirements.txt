@@ -1,5 +1,8 @@
 # Robot customer (steps 1-5). Only Faker is needed; it falls back to built-in names without it.
 faker>=30
+# Assistant agent: the estimator and its metrics use numpy only (no sklearn/pandas).
+numpy>=1.24
 # Customer brain back end, pick one (not pip packages for Ollama):
 #   Ollama (laptop):  https://ollama.com  ->  ollama pull qwen2.5:7b-instruct
 #   vLLM (PACE GPU):  pip install vllm    ->  vllm serve Qwen/Qwen2.5-7B-Instruct
+# Agent LLM, same back ends:  vllm serve meta-llama/Llama-3.1-8B-Instruct --port 8001

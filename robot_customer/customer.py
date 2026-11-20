@@ -30,8 +30,12 @@ TTSFn = Callable[[str, str, Path], float]
 
 class RobotCustomer:
     def __init__(self, goal: Goal, brain: Brain, typo_rate: float = 0.02,
-                 out_dir: str | Path | None = None, tts: TTSFn | None = None):
+                 out_dir: str | Path | None = None, tts: TTSFn | None = None,
+                 run_seed: int = 0):
         self.goal, self.brain = goal, brain
+        # run_seed repeats the SAME goal with different randomness (typos here;
+        # the caller also varies the LLM seed). run_seed 0 keeps the old typos.
+        self.run_seed = run_seed
         self.typo_rate, self.tts = typo_rate, tts
         self.out_dir = Path(out_dir) / goal.dialogue_id if out_dir else None
         self.history: list[dict] = []      # {"speaker", "text", ...} both sides
@@ -54,7 +58,7 @@ class RobotCustomer:
             dialogue_id=self.goal.dialogue_id, turn=turn, mode="speech",
             path=path.value, slot=slot, assistant_action=assistant.action,
             true_text="", true_value=value, voice=self.goal.voice,
-            seed=self.goal.seed, prompt_version=prompts.PROMPT_VERSION,
+            seed=self.goal.seed, run_seed=self.run_seed, prompt_version=prompts.PROMPT_VERSION,
         )
 
         if path is RoutePath.SPEAK:
@@ -79,8 +83,8 @@ class RobotCustomer:
             pkg.true_text = value
             pkg.spoken_text = spell_out(value, slot)
         elif path is RoutePath.TYPE:
-            # Separate RNG per (dialogue seed, turn) so reruns give identical typos.
-            rng = random.Random(self.goal.seed * 1000 + turn)
+            # Separate RNG per (goal seed, run seed, turn) so reruns give identical typos.
+            rng = random.Random(self.goal.seed * 1000 + turn + 1_000_003 * self.run_seed)
             res = add_typos(value, self.typo_rate, rng)
             pkg.mode = "typed"
             pkg.true_text = value

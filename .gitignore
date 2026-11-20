@@ -9,3 +9,9 @@ raw_tts/
 mixed_audio/
 __pycache__/
 *.pyc
+# Audio made by TTS
+*.wav
+
+# Trained estimator / outcome tables
+models/
+
