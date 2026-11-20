@@ -1,99 +1,91 @@
 import os
 import json
+from pathlib import Path
+import numpy as np
 import torch
 import librosa
 import soundfile as sf
 from kokoro import KPipeline
 
-# 1. initialize Kokoro Pipeline（'a' = American English；'b' = British English）
+# initialize Kokoro Pipeline（'a' = Amercian,  'b' = British）
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-pipeline = KPipeline(lang_code='a', device=device)
+pipelines = {
+    'a': KPipeline(lang_code='a', device=device),
+    'b': KPipeline(lang_code='b', device=device),
+}
 
-def format_spelling_text(word: str) -> str:
-    """turn a word into a spelled-out format, e.g., "Cambridge" -> "C, A, M, B, R, I, D, G, E" """
-    cleaned = word.strip().upper()
-    return ", ".join(list(cleaned))
+def kokoro_tts(text: str, voice: str, out_path: Path) -> float:
+    """
+    [Option A] get the clean spoken_text、voice ID and output path,
+    write 16 kHz mono WAV send the duration (float)。
+    """
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
-def generate_utterance(
-    utt_id: str,
-    text: str,
-    output_dir: str,
-    voice: str = 'af_heart',
-    speed: float = 1.0,
-    is_spelled: bool = False
-) -> str:
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # turn the text into spelled-out format if is_spelled is True
-    tts_input = format_spelling_text(text) if is_spelled else text
-    
-    # Kokoro TTS in streaming mode
-    generator = pipeline(tts_input, voice=voice, speed=speed)
-    audio_chunks = []
-    for _, _, audio in generator:
-        if audio is not None:
-            audio_chunks.append(audio)
-            
+    # based on Kokoro voice naming rules automatically select American ('af_', 'am_') or British ('bf_', 'bm_')
+    lang_code = 'b' if voice.startswith(('bf_', 'bm_')) else 'a'
+    pipeline = pipelines[lang_code]
+
+    # directly synthesize preprocessed spoken_text
+    generator = pipeline(text, voice=voice, speed=1.0)
+    audio_chunks = [audio for _, _, audio in generator if audio is not None]
+
     if not audio_chunks:
-        raise ValueError(f"TTS failed, no audio: {utt_id}")
-        
-    import numpy as np
+        raise ValueError(f"TTS generation failed: text='{text}', voice='{voice}'")
+
     full_audio_24k = np.concatenate(audio_chunks)
-    
-    # 2. resample：change Kokoro 24,000 Hz into Whisper 16,000 Hz
+
+    # resample to Whisper's required 16,000 Hz mono
     audio_16k = librosa.resample(full_audio_24k, orig_sr=24000, target_sr=16000)
-    
-    # 3. store into 16-bit PCM WAV
-    out_path = os.path.join(output_dir, f"{utt_id}.wav")
-    sf.write(out_path, audio_16k, samplerate=16000, subtype='PCM_16')
-    return out_path
+    sf.write(str(out_path), audio_16k, samplerate=16000, subtype='PCM_16')
+
+    # return audio file duration (float)
+    duration_seconds = float(len(audio_16k) / 16000.0)
+    return round(duration_seconds, 4)
+
+
+def process_turns_jsonl(turns_jsonl_path: str):
+    """
+    [Option B] read the turns.jsonl in batch：
+    for mode == "speech" generate 16kHz WAV and send audio_seconds
+    """
+    turns_path = Path(turns_jsonl_path)
+    updated_lines = []
+
+    with open(turns_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            record = json.loads(line)
+
+            # only TTS in speech mode, skip in typed mode
+            if record.get("mode") == "speech":
+                spoken_text = record["spoken_text"]
+                voice = record["voice"]
+                audio_file = Path(record["audio_file"])
+
+                duration = kokoro_tts(spoken_text, voice, audio_file)
+                record["audio_seconds"] = duration
+                print(f"[TTS finish] {audio_file} ({duration}s) | text: {spoken_text}")
+
+            updated_lines.append(json.dumps(record, ensure_ascii=False))
+
+    # write updated audio_seconds back to turns.jsonl
+    with open(turns_path, "w", encoding="utf-8") as f:
+        for line in updated_lines:
+            f.write(line + "\n")
+
 
 if __name__ == "__main__":
-    # testing：normal dialogue / spell format / diff tones
-    sample_tasks = [
-        {
-            "utt_id": "MUL0001_turn1_normal",
-            "text": "I would like to book a train from Cambridge to London Kings Cross.",
-            "voice": "af_heart",      # american female voice
-            "is_spelled": False,
-            "slots": [{"domain": "train", "slot_name": "departure", "slot_value": "cambridge"}]
-        },
-        {
-            "utt_id": "MUL0001_turn2_spell",
-            "text": "Cambridge",
-            "voice": "af_heart",
-            "is_spelled": True,       # if system asked for spelling, you can set is_spelled=True to generate spelled-out format
-            "slots": [{"domain": "train", "slot_name": "departure", "slot_value": "cambridge"}]
-        },
-        {
-            "utt_id": "MUL0002_turn1_male",
-            "text": "My reference number is X 7 B 9 2 K.",
-            "voice": "am_michael",    # american male voice (can be used to test different speakers)
-            "is_spelled": False,
-            "slots": [{"domain": "hotel", "slot_name": "ref", "slot_value": "x7b92k"}]
-        }
-    ]
-
-    output_dir = "raw_tts"
-    manifest_path = "manifests/raw_tts_manifest.jsonl"
-    os.makedirs("manifests", exist_ok=True)
-
-    with open(manifest_path, "w", encoding="utf-8") as f:
-        for task in sample_tasks:
-            wav_path = generate_utterance(
-                utt_id=task["utt_id"],
-                text=task["text"],
-                output_dir=output_dir,
-                voice=task["voice"],
-                is_spelled=task["is_spelled"]
-            )
-            record = {
-                "utt_id": task["utt_id"],
-                "raw_audio_path": wav_path.replace("\\", "/"),
-                "ground_truth_text": task["text"],
-                "voice": task["voice"],
-                "is_spelled": task["is_spelled"],
-                "slots": task["slots"]
-            }
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
-            print(f"[finish] {task['utt_id']} -> {wav_path}")
+    # test Option B：read turns.jsonl
+    sample_turns_file = "runs/dlg_00001/turns.jsonl"
+    if os.path.exists(sample_turns_file):
+        process_turns_jsonl(sample_turns_file)
+    else:
+        # test in single utterance mode (Option A)
+        sec = kokoro_tts(
+            text="V. A. R. U. N. dot. K. at. G. M. A. I. L. dot. C. O. M.",
+            voice="bf_emma",
+            out_path=Path("runs/test_audio/turn_01.wav")
+        )
+        print(f"Single utterance test completed, audio duration: {sec} seconds")
