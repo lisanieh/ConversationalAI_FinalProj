@@ -13,7 +13,8 @@ module load anaconda3                       # `module avail anaconda` if the nam
 if [ ! -d "$ENV" ]; then
   conda create -y -p "$ENV" python=3.11     # Kokoro needs Python < 3.13
 fi
-source activate "$ENV" 2>/dev/null || conda activate "$ENV"
+eval "$(conda shell.bash hook)"
+conda activate "$ENV"
 
 # vLLM first: it pins the CUDA build of torch that everything else then reuses.
 pip install vllm

@@ -8,7 +8,8 @@ export HF_HOME=$SCR/hf XDG_CACHE_HOME=$SCR/cache HF_HUB_OFFLINE=${HF_HUB_OFFLINE
 export PYTHONUNBUFFERED=1 TOKENIZERS_PARALLELISM=false
 
 module load anaconda3
-source activate "$ENV" 2>/dev/null || conda activate "$ENV"
+eval "$(conda shell.bash hook)"
+conda activate "$ENV"
 cd "${SLURM_SUBMIT_DIR:-$(pwd)}"
 mkdir -p logs
 
