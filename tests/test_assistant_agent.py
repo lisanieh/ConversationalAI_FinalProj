@@ -39,6 +39,19 @@ class TestValues(unittest.TestCase):
         self.assertTrue(values_match("name", "varun kamath", "Varun Kamath"))
         self.assertFalse(values_match("area", "nort", "north"))      # format only, never a fix
 
+    def test_dontcare_phrasings(self):
+        """No-preference answers the Qwen customer gave in smoke 7212405."""
+        for s in ["I'm open to any kind of food.", "I'm open to any area.", "any kind of", "any area",
+                  "any type", "any", "I'm not sure yet, any good spot will do.",
+                  "I'm not particular about the area, just let me know what you recommend.",
+                  "I don't have a specific price range in mind.", "no preference", "up to you",
+                  "Just suggest something based on the area."]:
+            self.assertEqual(canonical("area", s), "dontcare", s)
+        for s, slot in [("centre", "area"), ("anna kowalski", "name"), ("moderate", "pricerange"),
+                        ("international", "food"), ("north american", "food"), ("tuesday", "day"),
+                        ("Danny Boone", "name"), ("company", "name")]:
+            self.assertNotEqual(canonical(slot, s), "dontcare", s)
+
     def test_error_types(self):
         self.assertEqual(classify_error("name", "Varun Kamath", "varun kamath"), "correct")
         self.assertEqual(classify_error("name", "Varun Kamath", "varun"), "deletion")
@@ -126,6 +139,18 @@ class TestLLMExtractor(unittest.TestCase):
         dom, vals = LLMExtractor(self.FakeLLM("I think north")).extract("In the north, please.", "area")
         self.assertEqual(vals, {"area": "north"})
 
+    def test_asked_slot_missing_from_valid_json_comes_from_rules(self):
+        """Smoke 7212405: a bare '377 963 1537.' came back as valid JSON with no phone."""
+        from assistant_agent import LLMExtractor
+        ex = LLMExtractor(self.FakeLLM('{"domain": null, "slots": {}}'))
+        self.assertEqual(ex.extract("377 963 1537.", asked_slot="phone")[1], {"phone": "377 963 1537"})
+        self.assertEqual(ex.filled_from_rules, "phone")
+        dom, vals = ex.extract("I'm open to any kind of food.", asked_slot="food")
+        self.assertEqual(canonical("food", vals["food"]), "dontcare")
+        ex = LLMExtractor(self.FakeLLM('{"domain": null, "slots": {"phone": "377 963 1537"}}'))
+        ex.extract("377 963 1537.", asked_slot="phone")
+        self.assertIsNone(ex.filled_from_rules)                        # LLM had it: rules not used
+
 
 class TestPolicies(unittest.TestCase):
     TABLE = {"confirm|*": {"r": 0.5, "e": 0.02, "n_wrong": 100, "n_right": 100},
@@ -160,8 +185,19 @@ class TestPolicies(unittest.TestCase):
     def test_all_specs_build(self):
         o = RepairOutcomeModel(self.TABLE)
         for spec in ["accept", "confirm", "spell", "type", "typed", "threshold:-0.5", "llm",
+                     "threshold-confirm:-0.5", "threshold-confirm", "phat-confirm:0.3", "phat-confirm",
                      "u2r", "u2r:5", "u2r-notype"]:
             make_policy(spec, o)
+
+    def test_confirm_baselines(self):
+        tc, pc = make_policy("threshold-confirm:-0.5"), make_policy("phat-confirm:0.3")
+        self.assertEqual(tc.choose({"features": {"mean_logprob": -0.9}}), "confirm")
+        self.assertEqual(tc.choose({"features": {"mean_logprob": -0.1}}), "accept")
+        self.assertEqual(make_policy("threshold:-0.5").choose({"features": {"mean_logprob": -0.9}}), "type")
+        self.assertEqual((pc.choose({"p_hat": 0.5}), pc.choose({"p_hat": 0.1})), ("confirm", "accept"))
+        from assistant_agent.export import policy_name
+        self.assertEqual([policy_name(s) for s in ("threshold:-0.5", "threshold-confirm:-0.5", "phat-confirm:0.3")],
+                         ["raw_conf_threshold", "raw_conf_confirm", "phat_confirm0.3"])
 
 
 class TestEstimator(unittest.TestCase):
@@ -237,11 +273,49 @@ class TestAgentDialogues(unittest.TestCase):
         rows, dlg = score_dialogue(agent, customer, {"policy": "type"})
         self.assertTrue(dlg["joint_goal_correct"])                   # spelling has no typos
 
+    def test_typed_value_read_back_and_retyped_on_no(self):
+        """A typo is caught by the read-back; the retype fixes it (typo_review=0, high rate)."""
+        seed = next(s for s in range(100) if GoalBuilder().build(s).can_type)
+        goal = GoalBuilder().build(seed)
+        customer = RobotCustomer(goal, ScriptedBrain(), typo_rate=0.15)
+        agent = U2RAgent(make_policy("type"), RuleExtractor())
+        ch = TextChannel()
+        run_dialogue(customer, lambda pkg: agent.step(ch(pkg) if pkg else None), max_turns=60)
+        typed = [a for a in agent.attempts if a["action"] == "type" and "typed_value" in a]
+        self.assertTrue(typed)
+        self.assertTrue(all(a["repair_channel"].endswith("+readback") for a in typed))
+        retyped = [a for a in typed if a["retypes"]]
+        self.assertTrue(retyped, "expected at least one typo caught at a 15% rate")
+        for a in typed:                                # no retype -> the read-back said yes
+            if not a["retypes"]:
+                self.assertTrue(values_match(a["slot"], a["committed_value"], goal.slots[a["slot"]]))
+        no_rb = U2RAgent(make_policy("type"), RuleExtractor(), type_readback=False)
+        run_dialogue(RobotCustomer(goal, ScriptedBrain(), typo_rate=0.15),
+                     lambda pkg: no_rb.step(ch(pkg) if pkg else None), max_turns=60)
+        self.assertFalse(any("typed_value" in a for a in no_rb.attempts))
+
+    def test_spell_and_type_only_for_entities(self):
+        for spec in ["spell", "type"]:
+            customer, agent = _run(3, spec)
+            for a in agent.attempts:
+                if a["mode"] != "speech":
+                    continue
+                if a["slot"] in ("name", "email", "phone"):
+                    self.assertEqual(a["action"], spec, a["slot"])
+                else:
+                    self.assertEqual((a["action"], a.get("requested_action")), ("confirm", spec), a["slot"])
+            asked = {h["action"] for h in customer.history if h["speaker"] == "assistant"
+                     and h["slot"] not in (None, "name", "email", "phone")}
+            self.assertNotIn("spell", asked)
+
     def test_typed_baseline_asks_by_typing(self):
         seed = next(s for s in range(100) if GoalBuilder().build(s).can_type)
         customer, agent = _run(seed, "typed")
         asks = [h for h in customer.history if h["speaker"] == "assistant" and h["slot"]]
-        self.assertTrue(asks and all(h["action"] == "type" for h in asks))
+        questions = [h for h in asks if not h["text"].startswith("Thanks. I have")]   # not the read-backs
+        self.assertTrue(questions and all(h["action"] == "type" for h in questions))
+        readbacks = [h for h in asks if h["text"].startswith("Thanks. I have")]
+        self.assertTrue(readbacks and all(h["action"] == "confirm" for h in readbacks))
         self.assertTrue(all(a["action"] == "type" for a in agent.attempts if a["mode"] == "typed"))
 
     def test_mock_asr_features_and_u2r(self):

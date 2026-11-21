@@ -61,8 +61,12 @@ FEATURE_NAMES = {"agreement": "agree_k", "snr_est": "snr_est_db", "value_found":
 def policy_name(spec: str) -> str:
     if spec in POLICY_NAMES:
         return POLICY_NAMES[spec]
+    if spec.startswith("threshold-confirm"):
+        return "raw_conf_confirm"
     if spec.startswith("threshold"):
         return "raw_conf_threshold"
+    if spec.startswith("phat-confirm"):
+        return f"phat_confirm{spec.split(':')[1]}" if ":" in spec else "phat_confirm"
     if spec.startswith("u2r:"):
         return f"U2R_Cw{spec.split(':')[1]}"
     return spec

@@ -31,12 +31,12 @@ TTSFn = Callable[[str, str, Path], float]
 class RobotCustomer:
     def __init__(self, goal: Goal, brain: Brain, typo_rate: float = 0.02,
                  out_dir: str | Path | None = None, tts: TTSFn | None = None,
-                 run_seed: int = 0):
+                 run_seed: int = 0, typo_review: float = 0.0):
         self.goal, self.brain = goal, brain
         # run_seed repeats the SAME goal with different randomness (typos here;
         # the caller also varies the LLM seed). run_seed 0 keeps the old typos.
         self.run_seed = run_seed
-        self.typo_rate, self.tts = typo_rate, tts
+        self.typo_rate, self.typo_review, self.tts = typo_rate, typo_review, tts
         self.out_dir = Path(out_dir) / goal.dialogue_id if out_dir else None
         self.history: list[dict] = []      # {"speaker", "text", ...} both sides
         self.packages: list[TurnPackage] = []
@@ -85,12 +85,12 @@ class RobotCustomer:
         elif path is RoutePath.TYPE:
             # Separate RNG per (goal seed, run seed, turn) so reruns give identical typos.
             rng = random.Random(self.goal.seed * 1000 + turn + 1_000_003 * self.run_seed)
-            res = add_typos(value, self.typo_rate, rng)
+            res = add_typos(value, self.typo_rate, rng, review=self.typo_review)
             pkg.mode = "typed"
             pkg.true_text = value
             pkg.typed_text = res.typed
             pkg.typo_edits = res.edits
-            pkg.typed_chars = len(res.typed)
+            pkg.typed_chars = len(res.typed) + 2 * res.n_fixed   # each fix: a backspace and the right key
             pkg.voice = None
 
         if pkg.mode == "speech":

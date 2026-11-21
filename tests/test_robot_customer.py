@@ -85,6 +85,14 @@ class TestTypos(unittest.TestCase):
         res = add_typos(text, 0.02, rng)
         self.assertAlmostEqual(len(res.edits) / len(text), 0.02, delta=0.006)
 
+    def test_review_catches_most_typos(self):
+        text = "a" * 20000
+        res = add_typos(text, 0.02, random.Random(0), review=0.8)
+        self.assertAlmostEqual(len(res.edits) / len(text), 0.004, delta=0.0015)   # 2% x (1 - 0.8)
+        self.assertAlmostEqual(res.n_fixed / len(text), 0.016, delta=0.003)
+        self.assertEqual(add_typos("varun.k@gmail.com", 0.3, random.Random(5)).typed,
+                         add_typos("varun.k@gmail.com", 0.3, random.Random(5), review=0.0).typed)
+
 
 class TestRouter(unittest.TestCase):
     def setUp(self):

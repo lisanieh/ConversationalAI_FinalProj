@@ -27,7 +27,8 @@ ACTIONS = ("accept", "confirm", "spell", "type")
 # from effort.EffortModel). C_w = 60 s means "a wrong booking costs the customer
 # about a minute to notice and fix"; it is swept in the robustness analysis.
 # "reask" is the plain voice re-ask used after a "no" to a confirmation.
-EFFORT = {"accept": 0.0, "confirm": 3.0, "spell": 10.0, "type": 12.0, "reask": 4.0}
+EFFORT = {"accept": 0.0, "confirm": 3.0, "spell": 10.0, "type": 12.0, "reask": 4.0,
+          "readback": 3.0, "retype": 12.0}     # readback / retype: the checks after a typed value
 C_W = 60.0
 
 SLOT_TYPE = {
@@ -37,6 +38,13 @@ SLOT_TYPE = {
 }
 SLOT_TYPES = ["name", "email", "phone", "number", "time", "day", "category", "other"]
 ENTITY_SLOTS = {"name", "email", "phone"}
+
+
+def allowed_actions(slot: str) -> tuple[str, ...]:
+    """Spelling or typing only makes sense for open-vocabulary entities.
+    Spelling "8" or "18:00" letter by letter is not a real repair (it decoded
+    "18:00" as "1 800"), so other slots get accept or confirm only."""
+    return ACTIONS if slot in ENTITY_SLOTS else ("accept", "confirm")
 
 
 def slot_type(slot: str) -> str:

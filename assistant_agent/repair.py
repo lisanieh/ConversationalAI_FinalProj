@@ -59,6 +59,10 @@ def request(action: str, slot: str, value: str = "") -> str:
         return f"Could you type the {label} into the chat box, please?"
     if action == "reask":
         return f"Sorry about that. Could you tell me the {label} again?"
+    if action == "readback":                      # after a typed value, before committing it
+        return f"Thanks. I have {display(slot, value)}, is that right?"
+    if action == "retype":
+        return f"Sorry, could you type the {label} again, please?"
     return question(slot)
 
 

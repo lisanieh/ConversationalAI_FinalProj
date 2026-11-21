@@ -83,7 +83,7 @@ for s in 0 1 2; do
 done
 ```
 
-The eval phase is the biggest run: 10 policies × 4 conditions × N goals per seed. If one job hits the time limit, split it further with `EXTRA="--conditions music:10 music:5"` or `EXTRA="--policies u2r accept spell type"`.
+The eval phase is the biggest run: 12 policies × 4 conditions × N goals per seed. If one job hits the time limit, split it further with `EXTRA="--conditions music:10 music:5"` or `EXTRA="--policies u2r accept spell type"`.
 
 ## 4. Merge and evaluate
 

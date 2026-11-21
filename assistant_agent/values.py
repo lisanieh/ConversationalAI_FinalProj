@@ -21,9 +21,16 @@ _UNITS = {"zero": 0, "oh": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five":
 _TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fifty": 50}
 DIGIT_WORDS = {"zero": "0", "oh": "0", "o": "0", "one": "1", "two": "2", "three": "3",
                "four": "4", "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9"}
-DONTCARE_RE = re.compile(r"\b(no (particular )?preference|(don'?t|do not) have (a|any) (particular )?preference|"
-                         r"don'?t (mind|care)|doesn'?t matter|dontcare|any(thing)? (is fine|will do)|"
-                         r"whatever)\b")
+DONTCARE_RE = re.compile(
+    r"\b(no (particular |specific |real )?preference|(don'?t|do not) have (a|any) (particular |specific |real )?preference|"
+    r"don'?t (mind|care)|doesn'?t matter|dontcare|whatever|anywhere|up to you|"
+    r"any(thing|where)?( [a-z]+){0,3} (is fine|will do|works|is ok(ay)?|is good)|"      # "any good spot will do"
+    r"(i'?m|i am) (open to|flexible|fine with|happy with) (any|anything|whatever)|"
+    r"not (particular|fussy|picky)|"
+    r"(no|(don'?t|do not) have (a|any)) (specific|particular) [a-z ]{0,25}in mind|"   # "no specific price range in mind"
+    r"(what(ever)? you|you can|just) (recommend|suggest|choose|pick)|"
+    r"any (kind|type|sort)( of)?|any (area|part|location|price|price range|cuisine|food|place|spot|day|time)|"
+    r"^any( one)?$)\b")
 DONTCARE = "dontcare"
 
 _DAY_ABBR = {"mon": "monday", "tue": "tuesday", "tues": "tuesday", "wed": "wednesday",

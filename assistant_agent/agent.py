@@ -11,13 +11,19 @@ Every value the agent hears becomes one *attempt* record (``self.attempts``).
 The agent never sees the goal: ``scoring.score_dialogue`` adds the truth later.
 
 Rules the agent follows:
-  * Typed input is accepted as is (it does not go through Whisper).
+  * Typed input does not go through Whisper. It is read back before it is
+    committed ("I have ..., is that right?"); on a "no" the customer is asked
+    to type it again, at most ``max_retypes`` times (``type_readback=False``
+    commits typed input as is, the old behaviour).
   * One question per turn: several heard values queue their repairs.
   * "No" to a confirmation without a new value -> spell (name/email/phone) or
     a plain re-ask (other slots). That follow-up is committed as it is heard.
   * Once the customer says they cannot type, TYPE is never asked again; a
     TYPE choice becomes SPELL (logged as ``spell_fallback``).
   * A slot that gets no value after ``max_asks`` questions is left empty.
+  * SPELL / TYPE are only used for name, email and phone (``allowed_actions``);
+    for other slots a policy's SPELL / TYPE becomes CONFIRM
+    (logged as ``requested_action``).
 """
 
 from __future__ import annotations
@@ -25,7 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .channel import Heard, slot_features
-from .config import DOMAINS, EFFORT, ENTITY_SLOTS, schema, slot_type
+from .config import DOMAINS, EFFORT, ENTITY_SLOTS, allowed_actions, schema, slot_type
 from .extract import RuleExtractor
 from .llm import parse_json
 from .policies import Policy
@@ -44,8 +50,10 @@ class Pending:
 
 class U2RAgent:
     def __init__(self, policy: Policy, extractor=None, estimator=None, llm=None,
-                 ask_llm: bool = False, max_asks: int = 2):
+                 ask_llm: bool = False, max_asks: int = 2, type_readback: bool = True,
+                 max_retypes: int = 1):
         self.policy, self.extractor = policy, extractor or RuleExtractor()
+        self.type_readback, self.max_retypes = type_readback, max_retypes
         self.rules = RuleExtractor()
         self.estimator, self.llm, self.ask_llm, self.max_asks = estimator, llm, ask_llm, max_asks
         self.domain: str | None = None
@@ -82,7 +90,7 @@ class U2RAgent:
             if p is not None and p.action == "ask_type" and heard.mode == "typed":
                 att = self._new_value(p.slot, heard.text, heard)
                 if att is not None:                  # typing was the first channel, not a repair
-                    att.update(action="type", repair_channel="ask_type",
+                    att.update(action="type", repair_channel="ask_type" + ("+readback" if self.type_readback else ""),
                                effort_prior_s=EFFORT["type"], repair_turns=[heard.turn])
                 return
             self._take_in(heard, asked=p.slot if p else None)
@@ -118,7 +126,8 @@ class U2RAgent:
                "repair_turns": []}
         self.attempts.append(att)
         if heard.mode == "typed":
-            self._commit(att, hyp)
+            self._typed(att, hyp)
+            self.state[slot] = hyp
             return att
 
         feats = slot_features(heard, raw)
@@ -127,9 +136,14 @@ class U2RAgent:
             att["p_hat"] = self.estimator.predict_one(feats, st)
         if self.ask_llm and self.llm is not None:
             att["llm_p_wrong"] = self.llm_p_wrong(heard.text, slot, hyp)
+        allowed = allowed_actions(slot)
         ctx = {"p_hat": att["p_hat"], "slot_type": st, "features": feats, "agent": self,
-               "transcript": heard.text, "slot": slot, "hyp": hyp, "can_type": not self.user_cannot_type}
+               "transcript": heard.text, "slot": slot, "hyp": hyp, "can_type": not self.user_cannot_type,
+               "allowed": allowed}
         action = self.policy.choose(ctx)
+        if action not in allowed:                     # e.g. always_spell on "day": confirm instead
+            att["requested_action"] = action
+            action = "confirm"
         att["expected_costs"] = ctx.get("expected_costs")
         att["action"] = action
         if action == "accept":
@@ -152,9 +166,9 @@ class U2RAgent:
         att["repair_received"] = heard.text
         hyp = att["hypothesis"]
 
-        if p.action == "type":
+        if p.action in ("type", "retype"):
             if heard.mode == "typed":
-                self._commit(att, canonical(p.slot, heard.text) or hyp)
+                self._typed(att, canonical(p.slot, heard.text) or hyp)
             elif is_cannot_type(heard.text):
                 self.user_cannot_type = True
                 att["repair_channel"] = "spell_fallback"
@@ -175,6 +189,25 @@ class U2RAgent:
         elif p.action == "reask":
             _, vals = self.extractor.extract(heard.text, asked_slot=p.slot, domain=self.domain)
             self._commit(att, canonical(p.slot, vals.get(p.slot)) or hyp)
+        elif p.action == "readback":
+            typed = att["typed_value"]
+            verdict, _ = decode_confirm(heard.text, p.slot, typed, self.rules)
+            if verdict == "yes" or att["retypes"] >= self.max_retypes:
+                self._commit(att, typed)
+            else:                                     # "no": a spoken correction would go through
+                att["retypes"] += 1                   # ASR again, so ask to type it once more
+                self.queue.insert(0, Pending(p.slot, "retype", att))
+
+    def _typed(self, att: dict, value: str) -> None:
+        """A typed value: read it back before committing, so a typo can be caught."""
+        if not self.type_readback:
+            self._commit(att, value)
+            return
+        att["typed_value"] = value
+        att.setdefault("retypes", 0)
+        if not att["repair_channel"].endswith("+readback"):
+            att["repair_channel"] += "+readback"
+        self.queue.insert(0, Pending(att["slot"], "readback", att))
 
     def _commit(self, att: dict, value: str) -> None:
         att["committed_value"] = value
@@ -189,8 +222,10 @@ class U2RAgent:
                 p.action = "spell"
                 p.attempt["repair_channel"] = "spell_fallback"
             self.pending = p
-            return {"text": request(p.action, p.slot, p.attempt["hypothesis"] if p.attempt else ""),
-                    "action": "normal" if p.action == "reask" else p.action, "slot": p.slot}
+            value = ((p.attempt.get("typed_value") if p.action == "readback" else p.attempt["hypothesis"])
+                     if p.attempt else "")
+            label = {"reask": "normal", "readback": "confirm", "retype": "type"}.get(p.action, p.action)
+            return {"text": request(p.action, p.slot, value), "action": label, "slot": p.slot}
         if not self.turns:
             return self._ask_none(GREETING, "greet")
         if self.domain is None:

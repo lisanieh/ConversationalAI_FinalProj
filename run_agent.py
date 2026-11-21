@@ -63,7 +63,9 @@ PHASES = {
     "fit": dict(policies=["accept"], conditions=["clean", "noise:20", "noise:15", "noise:10", "noise:5"],
                 replay=True),
     # eval: every policy on HELD-OUT conditions (never used for fitting). C_w sweep in seconds.
+    # threshold-confirm / phat-confirm: "confirm when unsure" baselines, the closest rivals to U2R.
     "eval": dict(policies=["typed", "accept", "confirm", "spell", "type", "threshold:-0.5",
+                           "threshold-confirm:-0.5", "phat-confirm:0.2",
                            "u2r", "u2r-notype", "u2r:30", "u2r:120"],
                  conditions=["music:10", "music:5", "sidetalk:10", "sidetalk:5"], replay=False),
 }
@@ -133,11 +135,12 @@ def run_all(a, conditions, policies, builder, estimator, outcomes, effort, needs
                              LLMBrain(a.customer_url, a.customer_model, seed=rs))
                     out_dir = (None if a.no_save_dialogues else
                                Path(a.out) / spec.replace(":", "_") / cond.replace(":", "_") / f"seed{run_seed}")
-                    customer = RobotCustomer(goal, brain, typo_rate=a.typo_rate, out_dir=out_dir,
+                    customer = RobotCustomer(goal, brain, typo_rate=a.typo_rate, typo_review=a.typo_review, out_dir=out_dir,
                                              run_seed=run_seed, tts=audio["tts"] if audio else None)
                     llm = ChatLLM(a.agent_url, a.agent_model, seed=rs) if needs_llm else None
                     extractor = LLMExtractor(llm) if a.agent_extractor == "llm" else RuleExtractor()
-                    agent = U2RAgent(make_policy(spec, outcomes), extractor, estimator, llm, ask_llm=a.ask_llm)
+                    agent = U2RAgent(make_policy(spec, outcomes), extractor, estimator, llm, ask_llm=a.ask_llm,
+                                     type_readback=a.type_readback)
                     channel = make_channel(a.channel, cname, snr, rs, audio)
                     meta = {"run_id": logdir.name, "policy": spec, "condition": cname, "snr_db": snr,
                             "channel": a.channel, "seed": run_seed}
@@ -181,7 +184,11 @@ def main(argv=None):
     ap.add_argument("--multiwoz", default=None,
                     help="MultiWOZ 2.2 split folder / release folder / HF json, or 2.1 data.json")
     ap.add_argument("--cannot-type-rate", type=float, default=0.20)
-    ap.add_argument("--typo-rate", type=float, default=0.02)
+    ap.add_argument("--typo-rate", type=float, default=0.02, help="per-character typo rate while typing")
+    ap.add_argument("--typo-review", type=float, default=0.8,
+                    help="chance each typo is caught before sending (0 = old per-character model)")
+    ap.add_argument("--no-type-readback", dest="type_readback", action="store_false",
+                    help="commit typed values without reading them back")
     ap.add_argument("--max-turns", type=int, default=40)
     ap.add_argument("--effort", default=None, help="effort model JSON (python -m assistant_agent.effort)")
     # audio (--channel whisper)
@@ -219,6 +226,8 @@ def main(argv=None):
     needs_llm = a.agent_extractor == "llm" or a.ask_llm or "llm" in policies
     if any(p.startswith("u2r") for p in policies) and (estimator is None or outcomes is None):
         raise SystemExit("u2r policies need --estimator and --outcomes (train on the fit phase first)")
+    if any(p.startswith("phat") for p in policies) and estimator is None:
+        raise SystemExit("phat policies need --estimator (train on the fit phase first)")
 
     logdir = Path(a.logdir)
     logdir.mkdir(parents=True, exist_ok=True)

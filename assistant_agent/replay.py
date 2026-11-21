@@ -23,7 +23,7 @@ from __future__ import annotations
 import copy
 import math
 
-from .config import ACTIONS
+from .config import ACTIONS, allowed_actions
 from .effort import EffortModel
 from .policies import ForcedFor, Fixed
 from .scoring import repair_seconds
@@ -79,6 +79,10 @@ def replay_turn(customer, agent, channel, pkg, effort: EffortModel, meta: dict) 
             if action == "accept":
                 row[f"final_wrong_{A}"], row[f"effort_{A}"] = row["y"], 0.0
                 row[f"value_{A}"] = first["hypothesis"]
+                continue
+            if action not in allowed_actions(slot):  # the agent would confirm instead: same branch
+                for k in ("final_wrong", "effort", "value", "channel"):
+                    row[f"{k}_{A}"] = row[f"{k}_CONFIRM"]
                 continue
             bc, ba, att = _branch(world, slot, action, pkg)
             committed = att["committed_value"] if att else None

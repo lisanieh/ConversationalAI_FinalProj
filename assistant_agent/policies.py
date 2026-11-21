@@ -12,6 +12,9 @@ Policy specs (``run_agent.py --policies``):
   accept | confirm | spell | type    fixed action for every heard value
   typed                              ask every slot by typing from the start (typed baseline)
   threshold[:<tau>]                  low raw confidence -> type (Bell et al., 2000 style)
+  threshold-confirm[:<tau>]          low raw confidence -> confirm (the classic ASR-confidence rule)
+  phat-confirm[:<t>]                 calibrated p_hat > t -> confirm. Same estimator as U2R but no
+                                     cost model: the ablation that shows what Eq. (1) adds.
   llm                                the LLM picks the repair (CHOOSE prompt)
   u2r | u2r:<C_w> | u2r-notype       the method; C_w sweep (seconds); ablation without TYPE
 
@@ -42,12 +45,28 @@ class Fixed(Policy):
 
 
 class ConfidenceThreshold(Policy):
-    def __init__(self, tau: float = -0.5):
-        self.tau, self.name = tau, f"threshold:{tau}"
+    """Raw Whisper confidence (mean token logprob of the value) below ``tau`` -> ``action``."""
+
+    def __init__(self, tau: float = -0.5, action: str = "type"):
+        self.tau, self.action = tau, action
+        self.name = f"threshold:{tau}" if action == "type" else f"threshold-{action}:{tau}"
 
     def choose(self, ctx):
         f = ctx.get("features") or {}
-        return "type" if f.get("mean_logprob") is not None and f["mean_logprob"] < self.tau else "accept"
+        return self.action if f.get("mean_logprob") is not None and f["mean_logprob"] < self.tau else "accept"
+
+
+class PHatThreshold(Policy):
+    """Calibrated p_hat above ``t`` -> ``action``, else accept."""
+    needs_p_hat = True
+
+    def __init__(self, t: float = 0.2, action: str = "confirm"):
+        self.t, self.action, self.name = t, action, f"phat-{action}:{t}"
+
+    def choose(self, ctx):
+        if ctx.get("p_hat") is None:
+            raise ValueError("phat policies need p_hat: pass --estimator")
+        return self.action if ctx["p_hat"] > self.t else "accept"
 
 
 class LLMChoice(Policy):
@@ -80,7 +99,8 @@ class U2R(Policy):
     def choose(self, ctx):
         if ctx.get("p_hat") is None:
             raise ValueError("U2R needs p_hat: pass --estimator")
-        actions = self.actions if ctx.get("can_type", True) else tuple(a for a in self.actions if a != "type")
+        actions = tuple(a for a in self.actions if a in ctx.get("allowed", self.actions)
+                        and (a != "type" or ctx.get("can_type", True)))
         costs = {a: c for a, c in self.expected_costs(ctx["p_hat"], ctx["slot_type"]).items() if a in actions}
         ctx["expected_costs"] = costs
         return min(costs, key=costs.get)
@@ -110,8 +130,12 @@ def make_policy(spec: str, outcomes: RepairOutcomeModel | None = None) -> Policy
         return Fixed(spec)
     if spec == "typed":
         return Fixed("accept", "typed", ask_action="type")
+    if spec.startswith("threshold-confirm"):
+        return ConfidenceThreshold(float(spec.split(":")[1]) if ":" in spec else -0.5, "confirm")
     if spec.startswith("threshold"):
         return ConfidenceThreshold(float(spec.split(":")[1]) if ":" in spec else -0.5)
+    if spec.startswith("phat-confirm"):
+        return PHatThreshold(float(spec.split(":")[1]) if ":" in spec else 0.2, "confirm")
     if spec == "llm":
         return LLMChoice()
     if spec.startswith("u2r"):

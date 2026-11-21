@@ -50,7 +50,8 @@ step "6/6 measurement chain on mock data (checks error_scripts' packages on PACE
 python run_agent.py --phase fit --channel mock --n 15 --seeds 0 1 --logdir "$OUT/mock_fit" --no-save-dialogues | tail -4
 python -m assistant_agent.train --attempts "$OUT/mock_fit/attempts.jsonl" \
   --replays "$OUT/mock_fit/replays.jsonl" --out "$OUT/mock_models" --min-n 5 | tail -5
-python run_agent.py --policies accept spell type u2r --conditions music:5 --channel mock --n 15 \
+python run_agent.py --policies accept confirm spell type threshold-confirm:-0.5 phat-confirm:0.2 u2r \
+  --conditions music:5 --channel mock --n 15 \
   --seeds 0 1 --estimator "$OUT/mock_models/estimator.json" --outcomes "$OUT/mock_models/outcomes.json" \
   --logdir "$OUT/mock_eval" --no-save-dialogues | tail -6
 (cd error_scripts && python evaluate.py --turns "../$OUT/mock_eval/for_eval/eval_turns.jsonl" \

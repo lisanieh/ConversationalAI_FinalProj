@@ -52,6 +52,7 @@ class RepairOutcomeModel:
 
     def fit(self, attempts: list[dict]) -> "RepairOutcomeModel":
         rows = [a for a in attempts if a.get("policy") in FORCED and a.get("mode") == "speech"
+                and a.get("action", a["policy"]) == a["policy"]      # not a SPELL/TYPE turned CONFIRM
                 and not a.get("missed") and a.get("true_value") is not None
                 and a.get("committed_value") is not None]
         return self._fill({act: [(r["slot_type"], (not r["first_correct"], not r["committed_correct"],

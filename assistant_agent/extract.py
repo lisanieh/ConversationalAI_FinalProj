@@ -162,6 +162,7 @@ class LLMExtractor:
     def __init__(self, llm, fallback: RuleExtractor | None = None):
         self.llm, self.fallback = llm, fallback or RuleExtractor()
         self.last_raw: str | None = None
+        self.filled_from_rules: str | None = None     # the asked slot, if the rules supplied it
 
     def messages(self, text: str, asked_slot: str | None, domain: str | None) -> list[dict]:
         system = EXTRACT_PROMPT.format(slots=", ".join(ALL_SLOTS), domain=domain or "unknown",
@@ -171,6 +172,7 @@ class LLMExtractor:
 
     def extract(self, text: str, asked_slot: str | None = None,
                 domain: str | None = None) -> tuple[str | None, dict]:
+        self.filled_from_rules = None
         self.last_raw = self.llm.chat(self.messages(text, asked_slot, domain), max_tokens=150)
         out = parse_json(self.last_raw)
         if not isinstance(out.get("slots"), dict):          # not the JSON we asked for
@@ -179,4 +181,12 @@ class LLMExtractor:
         dom = dom.lower() if isinstance(dom, str) and dom.lower() in DOMAINS else None
         slots = {k: str(v).strip() for k, v in (out.get("slots") or {}).items()
                  if k in ALL_SLOTS and v not in (None, "", "none", "null")}
+        # Valid JSON can still drop the slot that was just asked (a bare "377 963 1537."
+        # came back as {}). The rules are good at the asked slot, so fill it from them.
+        if asked_slot and asked_slot not in slots:
+            rule_dom, rule_vals = self.fallback.extract(text, asked_slot, domain)
+            if rule_vals.get(asked_slot):
+                slots[asked_slot] = rule_vals[asked_slot]
+                self.filled_from_rules = asked_slot
+            dom = dom or rule_dom
         return dom, slots
