@@ -1,0 +1,53 @@
+{
+  "phase": "fit",
+  "policies": [
+    "accept",
+    "confirm",
+    "spell",
+    "type"
+  ],
+  "conditions": [
+    "clean",
+    "noise:10"
+  ],
+  "channel": "whisper",
+  "n": 30,
+  "first_goal": 0,
+  "seeds": [
+    0
+  ],
+  "replay": false,
+  "multiwoz": "datasets/multiwoz/data/MultiWOZ_2.2/test",
+  "cannot_type_rate": 0.2,
+  "typo_rate": 0.02,
+  "max_turns": 40,
+  "effort": null,
+  "musan": "datasets/musan",
+  "whisper_model": "small.en",
+  "K": 5,
+  "sample_temperature": 0.7,
+  "audio_device": null,
+  "save_audio": null,
+  "brain": "llm",
+  "customer_url": "http://localhost:8000/v1",
+  "customer_model": "Qwen/Qwen2.5-7B-Instruct",
+  "agent_extractor": "llm",
+  "agent_url": "http://localhost:8001/v1",
+  "agent_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "estimator": null,
+  "outcomes": null,
+  "ask_llm": true,
+  "logdir": "logs/midterm",
+  "out": "logs/midterm/runs",
+  "no_save_dialogues": false,
+  "show": false,
+  "effort_model": {
+    "speech_wps": 2.5,
+    "listen_wps": 2.7,
+    "spell_ups": 1.6,
+    "typing_cps": 3.0,
+    "type_switch_s": 4.0,
+    "turn_latency_s": 0.5,
+    "source": "defaults"
+  }
+}

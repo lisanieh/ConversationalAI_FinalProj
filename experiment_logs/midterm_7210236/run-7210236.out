@@ -1,0 +1,59 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-20-2026 22:35:28
+Job ID:    7210236
+User ID:   vkamath32
+Account:   coc
+Job name:  u2r-run
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+
+CondaError: Run 'conda init' before 'conda deactivate'
+
+== Fri Nov 20 10:35:38 PM EST 2026  host=atl1-1-03-010-10-0.pace.gatech.edu  job=7210236
+NVIDIA H100 80GB HBM3, 81559 MiB
+== starting agent LLM meta-llama/Llama-3.1-8B-Instruct (util 0.38)
+   agent ready
+== starting customer LLM Qwen/Qwen2.5-7B-Instruct (util 0.38)
+   customer ready
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/vkamath32/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/vkamath32/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/vkamath32/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/vkamath32/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/vkamath32/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+
+condition    policy            success  wrong/dlg  repair s/dlg
+clean        accept                23%       1.13           0.0
+clean        confirm               40%       0.77          60.4
+clean        spell                  3%       2.70          62.5
+clean        type                  30%       1.00          99.8
+noise:10     accept                17%       1.30           0.0
+noise:10     confirm               43%       0.87          60.3
+noise:10     spell                  3%       2.80          62.5
+noise:10     type                  30%       1.07         101.0
+
+Logs: logs/midterm/ (attempts, dialogues); error_scripts input: logs/midterm/for_eval/
+
+real	47m8.008s
+user	30m56.503s
+sys	0m10.903s
+== done: logs/midterm
+---------------------------------------
+Begin Slurm Epilog: Nov-20-2026 23:33:49
+Job ID:        7210236
+User ID:       vkamath32
+Account:       coc
+Job name:      u2r-run
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=07:46:40,vmem=0,walltime=00:58:20,mem=27416232K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-010-10-0
+---------------------------------------
