@@ -1,0 +1,33 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-21-2026 08:02:22
+Job ID:    7220292
+User ID:   ynieh3
+Account:   ece
+Job name:  u2r-smoke
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Sat Nov 21 08:02:26 AM EST 2026  host=atl1-1-03-010-20-0.pace.gatech.edu  job=7220292
+NVIDIA H100 80GB HBM3, 81559 MiB
+
+################ 1/6 unit tests (no models)
+Ran 52 tests in 7.297s
+
+OK
+
+################ 2/6 audio: Kokoro -> MUSAN -> Whisper on 6 sample turns
+[load] Kokoro + Whisper small.en on cuda + MUSAN {'noise': 930, 'music': 226, 'side_talk': 426} in 93s
+
+[2026-11-21T08:04:30.832] error: *** JOB 7220292 ON atl1-1-03-010-20-0 CANCELLED AT 2026-11-21T08:04:30 DUE to SIGNAL Terminated ***
+---------------------------------------
+Begin Slurm Epilog: Nov-21-2026 08:04:33
+Job ID:        7220292
+User ID:       ynieh3
+Account:       ece
+Job name:      u2r-smoke
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=00:17:04,vmem=0,walltime=00:02:08,mem=2539588K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-010-20-0
+---------------------------------------

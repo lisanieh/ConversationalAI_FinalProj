@@ -1,0 +1,223 @@
+[
+  {
+    "speaker": "assistant",
+    "text": "Hello, how can I help you today?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "Hi, I'd like to book a table at a restaurant.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Which area would you like?",
+    "action": "normal",
+    "slot": "area"
+  },
+  {
+    "speaker": "customer",
+    "text": "I don't have a preference.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What price range are you looking for?",
+    "action": "normal",
+    "slot": "pricerange"
+  },
+  {
+    "speaker": "customer",
+    "text": "I don't have a preference.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What kind of food would you like?",
+    "action": "normal",
+    "slot": "food"
+  },
+  {
+    "speaker": "customer",
+    "text": "I don't have a preference.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What day is the booking for?",
+    "action": "normal",
+    "slot": "day"
+  },
+  {
+    "speaker": "customer",
+    "text": "On tuesday.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the day is tuesday, is that right?",
+    "action": "confirm",
+    "slot": "day"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "How many people is it for?",
+    "action": "normal",
+    "slot": "people"
+  },
+  {
+    "speaker": "customer",
+    "text": "For 8 people.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the number of people is 8, is that right?",
+    "action": "confirm",
+    "slot": "people"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What time would you like the table?",
+    "action": "normal",
+    "slot": "time"
+  },
+  {
+    "speaker": "customer",
+    "text": "At 18:00.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the time is 18:00, is that right?",
+    "action": "confirm",
+    "slot": "time"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Can I have your name, please?",
+    "action": "normal",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "It's Megan Chang.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the name is Megan Chang, is that right?",
+    "action": "confirm",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What is your email address?",
+    "action": "normal",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "My email is meganchang50@gmail.com.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What is your email address?",
+    "action": "normal",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "My email is meganchang50@gmail.com.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "And a phone number we can reach you on?",
+    "action": "normal",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "My number is 687 847 5866.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the phone number is 687 847 5866, is that right?",
+    "action": "confirm",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Great, your booking is confirmed. Is there anything else?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "Great, thank you so much!",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  }
+]

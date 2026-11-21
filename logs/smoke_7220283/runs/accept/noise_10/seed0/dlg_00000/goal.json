@@ -1,0 +1,30 @@
+{
+  "dialogue_id": "dlg_00000",
+  "domain": "restaurant",
+  "slots": {
+    "area": "centre",
+    "pricerange": "expensive",
+    "food": "african",
+    "day": "monday",
+    "people": "8",
+    "time": "14:45",
+    "name": "Megan Chang",
+    "email": "meganchang50@gmail.com",
+    "phone": "687 847 5866"
+  },
+  "can_type": true,
+  "voice": "am_adam",
+  "seed": 0,
+  "source": "multiwoz22:PMUL0636.json",
+  "slot_order": [
+    "area",
+    "pricerange",
+    "food",
+    "day",
+    "people",
+    "time",
+    "name",
+    "email",
+    "phone"
+  ]
+}

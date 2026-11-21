@@ -1,0 +1,24 @@
+{
+  "dialogue_id": "dlg_00000",
+  "domain": "restaurant",
+  "slots": {
+    "day": "tuesday",
+    "people": "8",
+    "time": "18:00",
+    "name": "Megan Chang",
+    "email": "meganchang50@gmail.com",
+    "phone": "687 847 5866"
+  },
+  "can_type": true,
+  "voice": "am_adam",
+  "seed": 0,
+  "source": "multiwoz22:PMUL2351.json",
+  "slot_order": [
+    "day",
+    "people",
+    "time",
+    "name",
+    "email",
+    "phone"
+  ]
+}

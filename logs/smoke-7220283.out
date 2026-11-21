@@ -1,0 +1,659 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-21-2026 08:01:20
+Job ID:    7220283
+User ID:   ynieh3
+Account:   ece
+Job name:  u2r-smoke
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Sat Nov 21 08:01:24 AM EST 2026  host=atl1-1-03-010-10-0.pace.gatech.edu  job=7220283
+NVIDIA H100 80GB HBM3, 81559 MiB
+
+################ 1/6 unit tests (no models)
+Ran 52 tests in 11.695s
+
+OK
+
+################ 2/6 audio: Kokoro -> MUSAN -> Whisper on 6 sample turns
+[load] Kokoro + Whisper small.en on cuda + MUSAN {'noise': 930, 'music': 226, 'side_talk': 426} in 131s
+
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+--- name / speak / af_heart: 1.9s audio, TTS 296.8s
+    TTS input : It's Varun Kamath.
+    [clean    ] heard: "It's Varun Kamath."  (31.2s)
+               value: 'Varun Kamath' -> OK | min_logprob=-0.72 agreement=0.3333333333333333 snr_est=40.0 no_speech=0.03
+    [noise:10 ] heard: "It's Var and Kamath."  (38.8s)
+               value: 'Var Kamath' -> WRONG | min_logprob=-0.76 agreement=0.0 snr_est=21.5 no_speech=0.03
+    [music:5  ] heard: "It's Vahren Kamath."  (0.4s)
+               value: 'Vahren Kamath' -> WRONG | min_logprob=-0.79 agreement=0.0 snr_est=9.9 no_speech=0.11
+
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+--- name / spell / bf_emma: 3.2s audio, TTS 1.9s
+    TTS input : V. A. R. U. N, space, K. A. M. A. T. H.
+    [clean    ] heard: 'VARUN KAM-88'  (0.5s)
+               value: 'varunkam-' -> WRONG | min_logprob=-0.29 agreement=0.3333333333333333 snr_est=40.0 no_speech=0.06
+    [noise:10 ] heard: 'VARUN KAM-88'  (0.3s)
+               value: 'varunkam-' -> WRONG | min_logprob=-0.32 agreement=0.0 snr_est=40.0 no_speech=0.11
+    [music:5  ] heard: 'VARUN KAM88'  (0.9s)
+               value: 'varunkam' -> WRONG | min_logprob=-0.39 agreement=0.0 snr_est=8.8 no_speech=0.08
+
+--- email / speak / am_michael: 4.1s audio, TTS 0.1s
+    TTS input : My email is varun dot k at gmail dot com.
+    [clean    ] heard: 'My email is varun.k at gmail.com'  (0.5s)
+               value: None -> WRONG | min_logprob=-4.84 agreement=None snr_est=40.0 no_speech=0.02
+    [noise:10 ] heard: 'My email is varun.k at gmail.com'  (0.7s)
+               value: None -> WRONG | min_logprob=-4.11 agreement=None snr_est=13.7 no_speech=0.04
+    [music:5  ] heard: 'My email is varun.kade at gmail.com'  (1.1s)
+               value: None -> WRONG | min_logprob=-4.29 agreement=None snr_est=14.3 no_speech=0.03
+
+--- email / spell / bm_george: 4.9s audio, TTS 0.1s
+    TTS input : V. A. R. U. N. dot. K. at. G. M. A. I. L. dot. com.
+    [clean    ] heard: 'varun.kiatgmail.com'  (0.4s)
+               value: 'varunkiatgmailcom' -> WRONG | min_logprob=-0.49 agreement=0.0 snr_est=40.0 no_speech=0.14
+    [noise:10 ] heard: 'varun.ksgmail.com'  (0.5s)
+               value: 'varunksgmailcom' -> WRONG | min_logprob=-0.50 agreement=0.0 snr_est=33.2 no_speech=0.20
+    [music:5  ] heard: 'V-A-R-U-N dot K-YAT-G-M-A-I-L dot com'  (1.3s)
+               value: 'varun.k-yat-gmail.com' -> WRONG | min_logprob=-1.62 agreement=0.0 snr_est=13.1 no_speech=0.56
+
+--- phone / speak / af_bella: 4.8s audio, TTS 0.1s
+    TTS input : My number is four oh four, five five five, one two three four.
+    [clean    ] heard: 'My number is 404-555-1234.'  (0.4s)
+               value: '404-555-1234' -> OK | min_logprob=-0.33 agreement=1.0 snr_est=40.0 no_speech=0.03
+    [noise:10 ] heard: 'My number is 404-555-1234.'  (0.4s)
+               value: '404-555-1234' -> OK | min_logprob=-0.29 agreement=1.0 snr_est=12.8 no_speech=0.07
+    [music:5  ] heard: 'My number is 404-555-1234'  (0.4s)
+               value: '404-555-1234' -> OK | min_logprob=-0.27 agreement=0.6666666666666666 snr_est=9.0 no_speech=0.11
+
+--- time / speak / bf_isabella: 3.0s audio, TTS 0.1s
+    TTS input : At seven thirty p m, please.
+    [clean    ] heard: 'at 7.30pm please.'  (0.3s)
+               value: '7.30pm' -> OK | min_logprob=-0.08 agreement=0.6666666666666666 snr_est=40.0 no_speech=0.14
+    [noise:10 ] heard: 'at 7.30pm please.'  (0.3s)
+               value: '7.30pm' -> OK | min_logprob=-0.06 agreement=1.0 snr_est=13.0 no_speech=0.10
+    [music:5  ] heard: 'at 7.30pm please.'  (0.4s)
+               value: '7.30pm' -> OK | min_logprob=-0.11 agreement=1.0 snr_est=8.5 no_speech=0.08
+
+WAVs in /storage/ice1/2/1/ynieh3/Final-Proj/logs/smoke_7220283/audio_check  (listen to a few: names, spelled letters, noise levels)
+CHECK: 3 clean-speech case(s) were not recovered. Read the transcripts above: if names are missing from the TTS, Kokoro's espeak fallback for unknown words is not installed (pip install 'misaki[en]' espeakng-loader).
+total 509s
+!! audio check reported problems (see above)
+
+################ 3/6 one audio dialogue, no LLMs (scripted customer, rule extractor)
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=confirm | clean
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> Hi, I'd like to book a table at a restaurant.
+  A [normal:area] Which area would you like?
+  C <speak> I don't have a preference.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a preference.
+  A [normal:food] What kind of food would you like?
+  C <speak> I don't have a preference.
+  A [normal:day] What day is the booking for?
+  C <speak> On tuesday.
+  A [confirm:day] Just to confirm, the day is tuesday, is that right?
+  C <speak> Yes, that's right.
+  A [normal:people] How many people is it for?
+  C <speak> For 8 people.
+  A [confirm:people] Just to confirm, the number of people is 8, is that right?
+  C <speak> Yes, that's right.
+  A [normal:time] What time would you like the table?
+  C <speak> At 18:00.
+  A [confirm:time] Just to confirm, the time is 18:00, is that right?
+  C <speak> Yes, that's right.
+  A [normal:name] Can I have your name, please?
+  C <speak> It's Megan Chang.
+  A [confirm:name] Just to confirm, the name is Megan Chang, is that right?
+  C <speak> Yes, that's right.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My number is 687 847 5866.
+  A [confirm:phone] Just to confirm, the phone number is 687 847 5866, is that right?
+  C <speak> Yes, that's right.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> Great, thank you so much!
+    heard day='tuesday' p_hat=- -> confirm -> 'tuesday'
+    heard people='8' p_hat=- -> confirm -> '8'
+    heard time='18:00' p_hat=- -> confirm -> '18:00'
+    heard name='megan chang' p_hat=- -> confirm -> 'megan chang'
+    heard phone='687 847 5866' p_hat=- -> confirm -> '687 847 5866'
+  -> joint_goal=False success=False turns=17 repair effort=32.4s call=99s wrong=['email']
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=confirm | noise
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> Hi, I'd like to book a table at a restaurant.
+  A [normal:area] Which area would you like?
+  C <speak> I don't have a preference.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a preference.
+  A [normal:food] What kind of food would you like?
+  C <speak> I don't have a preference.
+  A [normal:day] What day is the booking for?
+  C <speak> On tuesday.
+  A [confirm:day] Just to confirm, the day is tuesday, is that right?
+  C <speak> Yes, that's right.
+  A [normal:people] How many people is it for?
+  C <speak> For 8 people.
+  A [confirm:people] Just to confirm, the number of people is 8, is that right?
+  C <speak> Yes, that's right.
+  A [normal:time] What time would you like the table?
+  C <speak> At 18:00.
+  A [confirm:time] Just to confirm, the time is 18:00, is that right?
+  C <speak> Yes, that's right.
+  A [normal:name] Can I have your name, please?
+  C <speak> It's Megan Chang.
+  A [confirm:name] Just to confirm, the name is Megan Chang, is that right?
+  C <speak> Yes, that's right.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My number is 687 847 5866.
+  A [confirm:phone] Just to confirm, the phone number is 687 847 5866, is that right?
+  C <speak> Yes, that's right.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> Great, thank you so much!
+    heard day='tuesday' p_hat=- -> confirm -> 'tuesday'
+    heard people='8' p_hat=- -> confirm -> '8'
+    heard time='18:00' p_hat=- -> confirm -> '18:00'
+    heard name='megan chang' p_hat=- -> confirm -> 'megan chang'
+    heard phone='687 847 5866' p_hat=- -> confirm -> '687 847 5866'
+  -> joint_goal=False success=False turns=17 repair effort=32.4s call=99s wrong=['email']
+
+condition    policy            success  wrong/dlg  repair s/dlg
+clean        confirm                0%       0.00          32.4
+noise:10     confirm                0%       0.00          32.4
+
+Logs: logs/smoke_7220283/audio_scripted/ (attempts, dialogues); error_scripts input: logs/smoke_7220283/audio_scripted/for_eval/
+
+real	0m36.390s
+user	0m34.210s
+sys	0m4.267s
+
+################ 4/6 start the LLM servers
+== starting agent LLM meta-llama/Llama-3.1-8B-Instruct (util 0.38)
+   agent ready
+== starting customer LLM Qwen/Qwen2.5-7B-Instruct (util 0.38)
+   customer ready
+
+################ 5/6 full stack: Qwen customer + Llama agent + audio, 2 goals, replays on (times it)
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=accept | clean
+goal: {'area': 'centre', 'pricerange': 'expensive', 'food': 'african', 'day': 'monday', 'people': '8', 'time': '14:45', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for eight at an expensive African restaurant in the centre area.
+  A [normal:day] What day is the booking for?
+  C <speak> It's on Monday.
+  A [normal:time] What time would you like the table?
+  C <speak> At 14:45.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Megan Chang.
+  A [normal:email] What is your email address?
+  C <speak> It's meganchang50@gmail.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My phone number is 687 847 5866.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='8' p_hat=- -> accept -> '8'
+    heard pricerange='expensive' p_hat=- -> accept -> 'expensive'
+    heard area='centre' p_hat=- -> accept -> 'centre'
+    heard food='african' p_hat=- -> accept -> 'african'
+    heard day='monday' p_hat=- -> accept -> 'monday'
+    heard time='14:45' p_hat=- -> accept -> '14:45'
+    heard name='meghan chang' p_hat=- -> accept -> 'meghan chang'
+    heard name='meghan chang -' p_hat=- -> accept -> 'meghan chang -'
+    heard email='5-0@gmail.com' p_hat=- -> accept -> '5-0@gmail.com'
+    heard phone='687 847 5866' p_hat=- -> accept -> '687 847 5866'
+  -> joint_goal=False success=False turns=7 repair effort=0.0s call=44s wrong=['name', 'email']
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+
+=== dlg_00001 seed=0 | hotel | can_type=True | policy=accept | clean
+goal: {'area': 'north', 'day': 'monday', 'people': '4', 'stay': '5', 'name': 'Dennis Boone', 'email': 'dennis.b@outlook.com', 'phone': '377 963 1537'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a hotel in the north area for Monday.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a specific price range in mind.
+  A [normal:type] Would you prefer a hotel or a guesthouse?
+  C <speak> A hotel, please.
+  A [normal:people] How many people is it for?
+  C <speak> It's for 4 people.
+  A [normal:stay] How many nights will you stay?
+  C <speak> For 5 nights.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Dennis Boone.
+  A [normal:email] What is your email address?
+  C <speak> dennis.b@outlook.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> 377 963 1537.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> That's all, thanks.
+    heard area='north' p_hat=- -> accept -> 'north'
+    heard day='monday' p_hat=- -> accept -> 'monday'
+    heard type='hotel' p_hat=- -> accept -> 'hotel'
+    heard people='4' p_hat=- -> accept -> '4'
+    heard stay='5' p_hat=- -> accept -> '5'
+    heard name='dennis boone' p_hat=- -> accept -> 'dennis boone'
+    heard email='dennis.b@outlook.com' p_hat=- -> accept -> 'dennis.b@outlook.com'
+    heard phone='377 963 1537' p_hat=- -> accept -> '377 963 1537'
+  -> joint_goal=True success=True turns=9 repair effort=0.0s call=54s wrong=[]
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=accept | noise
+goal: {'area': 'centre', 'pricerange': 'expensive', 'food': 'african', 'day': 'monday', 'people': '8', 'time': '14:45', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for eight at an expensive African restaurant in the centre area.
+  A [normal:day] What day is the booking for?
+  C <speak> It's on Monday.
+  A [normal:time] What time would you like the table?
+  C <speak> At 14:45.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Megan Chang.
+  A [normal:email] What is your email address?
+  C <speak> It's meganchang50@gmail.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My phone number is 687 847 5866.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='8' p_hat=- -> accept -> '8'
+    heard pricerange='expensive' p_hat=- -> accept -> 'expensive'
+    heard area='centre' p_hat=- -> accept -> 'centre'
+    heard food='african' p_hat=- -> accept -> 'african'
+    heard day='monday' p_hat=- -> accept -> 'monday'
+    heard time='14:45' p_hat=- -> accept -> '14:45'
+    heard name='meghan chang' p_hat=- -> accept -> 'meghan chang'
+    heard email='meghanchen50@gmail.com' p_hat=- -> accept -> 'meghanchen50@gmail.com'
+    heard phone='687 847 5866' p_hat=- -> accept -> '687 847 5866'
+  -> joint_goal=False success=False turns=7 repair effort=0.0s call=44s wrong=['name', 'email']
+
+=== dlg_00001 seed=0 | hotel | can_type=True | policy=accept | noise
+goal: {'area': 'north', 'day': 'monday', 'people': '4', 'stay': '5', 'name': 'Dennis Boone', 'email': 'dennis.b@outlook.com', 'phone': '377 963 1537'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a hotel in the north area for Monday.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a specific price range in mind.
+  A [normal:type] Would you prefer a hotel or a guesthouse?
+  C <speak> A hotel, please.
+  A [normal:people] How many people is it for?
+  C <speak> It's for 4 people.
+  A [normal:stay] How many nights will you stay?
+  C <speak> For 5 nights.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Dennis Boone.
+  A [normal:email] What is your email address?
+  C <speak> dennis.b@outlook.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> 377 963 1537.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> That's all, thanks.
+    heard area='north' p_hat=- -> accept -> 'north'
+    heard day='monday' p_hat=- -> accept -> 'monday'
+    heard type='hotel' p_hat=- -> accept -> 'hotel'
+    heard people='4' p_hat=- -> accept -> '4'
+    heard stay='5' p_hat=- -> accept -> '5'
+    heard name='dennis boone' p_hat=- -> accept -> 'dennis boone'
+    heard email='dennis.b@outlook.com' p_hat=- -> accept -> 'dennis.b@outlook.com'
+    heard phone='377 963 1537' p_hat=- -> accept -> '377 963 1537'
+  -> joint_goal=True success=True turns=9 repair effort=0.0s call=54s wrong=[]
+
+condition    policy            success  wrong/dlg  repair s/dlg  replayed values
+clean        accept                50%       1.50           0.0               17
+noise:10     accept                50%       1.00           0.0               16
+
+Logs: logs/smoke_7220283/full_fit/ (attempts, dialogues, replays); error_scripts input: logs/smoke_7220283/full_fit/for_eval/
+
+real	3m44.894s
+user	2m48.530s
+sys	0m4.811s
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=confirm | clean
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for 8 people on Tuesday at 18:00.
+  A [confirm:people] Just to confirm, the number of people is 8, is that right?
+  C <speak> Yes, that's right.
+  A [confirm:day] Just to confirm, the day is tuesday, is that right?
+  C <speak> Yes, that's right.
+  A [confirm:time] Just to confirm, the time is 6 p m, is that right?
+  C <speak> Yes, that's right.
+  A [normal:area] Which area would you like?
+  C <speak> I don't have a preference for the area.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a specific price range in mind.
+  A [normal:food] What kind of food would you like?
+  C <speak> I don't have a preference for the type of food.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Megan Chang.
+  A [confirm:name] Just to confirm, the name is Meghan Chang, is that right?
+  C <speak> No, it's Megan Chang.
+  A [spell:name] Sorry, could you spell the name for me, letter by letter?
+  C <spell> Megan Chang
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [confirm:email] Just to confirm, the email address is meghanchang50@gmail.com, is that right?
+  C <speak> No, it's meganchang50@gmail.com.
+  A [spell:email] Sorry, could you spell the email address for me, letter by letter?
+  C <spell> meganchang50@gmail.com
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My phone number is 687 847 5866.
+  A [confirm:phone] Just to confirm, the phone number is 687 847 5866, is that right?
+  C <speak> Yes, that's right.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's perfect. Thank you.
+    heard people='8' p_hat=- -> confirm -> '8'
+    heard day='tuesday' p_hat=- -> confirm -> 'tuesday'
+    heard time='6 p m' p_hat=- -> confirm -> '6 p m'
+    heard name='meghan chang' p_hat=- -> confirm/confirm+spell -> 'megaranchang'
+    heard email='meghanchang50@gmail.com' p_hat=- -> confirm/confirm+spell -> 'meganchang50@gmailcom'
+    heard phone='687 847 5866' p_hat=- -> confirm -> '687 847 5866'
+  -> joint_goal=False success=False turns=16 repair effort=60.9s call=112s wrong=['name', 'email']
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/ynieh3/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+
+=== dlg_00001 seed=0 | restaurant | can_type=True | policy=confirm | clean
+goal: {'area': 'centre', 'pricerange': 'moderate', 'food': 'international', 'day': 'sunday', 'people': '2', 'time': '18:45', 'name': 'Dennis Boone', 'email': 'dennis.b@outlook.com', 'phone': '377 963 1537'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for two on Sunday at 18:45.
+  A [confirm:people] Just to confirm, the number of people is 2, is that right?
+  C <speak> Yes, that's right.
+  A [confirm:day] Just to confirm, the day is sunday, is that right?
+  C <speak> Yes, that's right.
+  A [confirm:time] Just to confirm, the time is 18:45, is that right?
+  C <speak> Yes, that's right.
+  A [normal:area] Which area would you like?
+  C <speak> The centre area.
+  A [confirm:area] Just to confirm, the area is centre, is that right?
+  C <speak> Yes, that's right.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> Moderate.
+  A [confirm:pricerange] Just to confirm, the price range is moderate, is that right?
+  C <speak> Yes, that's right.
+  A [normal:food] What kind of food would you like?
+  C <speak> International.
+  A [confirm:food] Just to confirm, the type of food is international, is that right?
+  C <speak> Yes, that's right.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Dennis Boone.
+  A [confirm:name] Just to confirm, the name is Dennis Boone, is that right?
+  C <speak> Yes, that's right.
+  A [normal:email] What is your email address?
+  C <speak> dennis.b@outlook.com.
+  A [confirm:email] Just to confirm, the email address is dennis.b@outlook.com, is that right?
+  C <speak> Yes, that's right.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> 377 963 1537.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> 377 963 1537.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='2' p_hat=- -> confirm -> '2'
+    heard day='sunday' p_hat=- -> confirm -> 'sunday'
+    heard time='18:45' p_hat=- -> confirm -> '18:45'
+    heard area='centre' p_hat=- -> confirm -> 'centre'
+    heard pricerange='moderate' p_hat=- -> confirm -> 'moderate'
+    heard food='international' p_hat=- -> confirm -> 'international'
+    heard name='dennis boone' p_hat=- -> confirm -> 'dennis boone'
+    heard email='dennis.b@outlook.com' p_hat=- -> confirm -> 'dennis.b@outlook.com'
+  -> joint_goal=False success=False turns=17 repair effort=52.9s call=109s wrong=['phone']
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=spell | clean
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for 8 people on Tuesday at 18:00.
+  A [spell:people] Sorry, could you spell the number of people for me, letter by letter?
+  C <spell> 8
+  A [spell:day] Sorry, could you spell the day for me, letter by letter?
+  C <spell> tuesday
+  A [spell:time] Sorry, could you spell the time for me, letter by letter?
+  C <spell> 18:00
+  A [normal:area] Which area would you like?
+  C <speak> I have no preference.
+  A [normal:area] Which area would you like?
+  C <speak> I have no preference.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I have no preference.
+  A [normal:food] What kind of food would you like?
+  C <speak> I have no preference.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Megan Chang.
+  A [spell:name] Sorry, could you spell the name for me, letter by letter?
+  C <spell> Megan Chang
+  A [normal:email] What is your email address?
+  C <speak> It's meganchang50@gmail.com.
+  A [spell:name] Sorry, could you spell the name for me, letter by letter?
+  C <spell> Megan Chang
+  A [spell:email] Sorry, could you spell the email address for me, letter by letter?
+  C <spell> meganchang50@gmail.com
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> It's 687 847 5866.
+  A [spell:phone] Sorry, could you spell the phone number for me, letter by letter?
+  C <spell> 687 847 5866
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='8' p_hat=- -> spell -> '8'
+    heard day='tuesday' p_hat=- -> spell -> 'tuesday'
+    heard time='6 p m' p_hat=- -> spell -> '1 800'
+    heard name='meghan chang' p_hat=- -> spell -> 'megaranchang'
+    heard name='meghan chang -' p_hat=- -> spell -> 'megaranchang'
+    heard email='5-0@gmail.com' p_hat=- -> spell -> 'meganchang50@gmailcom'
+    heard phone='687 847 5866' p_hat=- -> spell -> '687 847 5866'
+  -> joint_goal=False success=False turns=16 repair effort=55.7s call=107s wrong=['time', 'name', 'email']
+
+=== dlg_00001 seed=0 | restaurant | can_type=True | policy=spell | clean
+goal: {'area': 'centre', 'pricerange': 'moderate', 'food': 'international', 'day': 'sunday', 'people': '2', 'time': '18:45', 'name': 'Dennis Boone', 'email': 'dennis.b@outlook.com', 'phone': '377 963 1537'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for two on Sunday at 18:45.
+  A [spell:people] Sorry, could you spell the number of people for me, letter by letter?
+  C <spell> 2
+  A [spell:day] Sorry, could you spell the day for me, letter by letter?
+  C <spell> sunday
+  A [spell:time] Sorry, could you spell the time for me, letter by letter?
+  C <spell> 18:45
+  A [normal:area] Which area would you like?
+  C <speak> I want to book somewhere in the centre.
+  A [spell:area] Sorry, could you spell the area for me, letter by letter?
+  C <spell> centre
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I prefer moderate pricing.
+  A [spell:pricerange] Sorry, could you spell the price range for me, letter by letter?
+  C <spell> moderate
+  A [normal:food] What kind of food would you like?
+  C <speak> I'd like international cuisine.
+  A [spell:food] Sorry, could you spell the type of food for me, letter by letter?
+  C <spell> international
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Dennis Boone.
+  A [spell:name] Sorry, could you spell the name for me, letter by letter?
+  C <spell> Dennis Boone
+  A [normal:email] What is your email address?
+  C <speak> My email is dennis.b@outlook.com.
+  A [spell:email] Sorry, could you spell the email address for me, letter by letter?
+  C <spell> dennis.b@outlook.com
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My phone number is 377 963 1537.
+  A [spell:phone] Sorry, could you spell the phone number for me, letter by letter?
+  C <spell> 377 963 1537
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='2' p_hat=- -> spell -> '2'
+    heard day='sunday' p_hat=- -> spell -> 'sunday'
+    heard time='18:45' p_hat=- -> spell -> '18:45'
+    heard area='centre' p_hat=- -> spell -> 'centre'
+    heard pricerange='moderate' p_hat=- -> spell -> 'moderit'
+    heard food='international' p_hat=- -> spell -> 'identi ernational'
+    heard name='dennis boone' p_hat=- -> spell -> 'dennis boone'
+    heard email='dennis.b.atoutlook.com' p_hat=- -> spell -> 'dennis.b-@-outlok.com'
+    heard phone='377 963 1537' p_hat=- -> spell -> '377 963 1537'
+  -> joint_goal=False success=False turns=17 repair effort=73.4s call=127s wrong=['pricerange', 'food', 'email']
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=type | clean
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for 8 people on Tuesday at 18:00.
+  A [type:people] Sorry, it's a bit noisy. Could you type the number of people into the chat box, please?
+  C <type> 8
+  A [type:day] Sorry, it's a bit noisy. Could you type the day into the chat box, please?
+  C <type> tuesday
+  A [type:time] Sorry, it's a bit noisy. Could you type the time into the chat box, please?
+  C <type> 18:00
+  A [normal:area] Which area would you like?
+  C <speak> I don't have a preference for the area.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a preference for the price range.
+  A [normal:food] What kind of food would you like?
+  C <speak> I don't have a preference for the type of food.
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Megan Chang.
+  A [type:name] Sorry, it's a bit noisy. Could you type the name into the chat box, please?
+  C <type> Megan Chang
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [type:email] Sorry, it's a bit noisy. Could you type the email address into the chat box, please?
+  C <type> meganchang50@gmail.com
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My phone number is 687 847 5866.
+  A [type:phone] Sorry, it's a bit noisy. Could you type the phone number into the chat box, please?
+  C <type> 687 8e7 586y
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='8' p_hat=- -> type -> '8'
+    heard day='tuesday' p_hat=- -> type -> 'tuesday'
+    heard time='6 p m' p_hat=- -> type -> '18:00'
+    heard name='meghan chang' p_hat=- -> type -> 'megan chang'
+    heard email='meghanchang50@gmail.com' p_hat=- -> type -> 'meganchang50@gmail.com'
+    heard phone='687 847 5866' p_hat=- -> type -> '68787586'
+  -> joint_goal=False success=False turns=14 repair effort=81.1s call=131s wrong=['phone']
+
+=== dlg_00001 seed=0 | restaurant | can_type=True | policy=type | clean
+goal: {'area': 'centre', 'pricerange': 'moderate', 'food': 'international', 'day': 'sunday', 'people': '2', 'time': '18:45', 'name': 'Dennis Boone', 'email': 'dennis.b@outlook.com', 'phone': '377 963 1537'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> I'm looking to book a table for two on Sunday at 18:45.
+  A [type:people] Sorry, it's a bit noisy. Could you type the number of people into the chat box, please?
+  C <type> 2
+  A [type:day] Sorry, it's a bit noisy. Could you type the day into the chat box, please?
+  C <type> sunday
+  A [type:time] Sorry, it's a bit noisy. Could you type the time into the chat box, please?
+  C <type> 18:45
+  A [normal:area] Which area would you like?
+  C <speak> I want to book somewhere in the centre.
+  A [type:area] Sorry, it's a bit noisy. Could you type the area into the chat box, please?
+  C <type> centre
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I want a moderate price range.
+  A [type:pricerange] Sorry, it's a bit noisy. Could you type the price range into the chat box, please?
+  C <type> moderate
+  A [normal:food] What kind of food would you like?
+  C <speak> I want international food.
+  A [type:food] Sorry, it's a bit noisy. Could you type the type of food into the chat box, please?
+  C <type> international
+  A [normal:name] Can I have your name, please?
+  C <speak> My name is Dennis Boone.
+  A [type:name] Sorry, it's a bit noisy. Could you type the name into the chat box, please?
+  C <type> Dennis Boone
+  A [normal:email] What is your email address?
+  C <speak> My email is dennis.b@outlook.com.
+  A [type:email] Sorry, it's a bit noisy. Could you type the email address into the chat box, please?
+  C <type> dennis.b@outlook.com
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My phone number is 377 963 1537.
+  A [type:phone] Sorry, it's a bit noisy. Could you type the phone number into the chat box, please?
+  C <type> 377 963 1537
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> No, that's all. Thank you.
+    heard people='2' p_hat=- -> type -> '2'
+    heard day='sunday' p_hat=- -> type -> 'sunday'
+    heard time='18:45' p_hat=- -> type -> '18:45'
+    heard area='centre' p_hat=- -> type -> 'centre'
+    heard pricerange='moderate' p_hat=- -> type -> 'moderate'
+    heard food='international' p_hat=- -> type -> 'international'
+    heard name='dennis boone' p_hat=- -> type -> 'dennis boone'
+    heard email='dennis.b.atoutlook.com' p_hat=- -> type -> 'dennis.b@outlook.com'
+    heard phone='377 963 1537' p_hat=- -> type -> '377 963 1537'
+  -> joint_goal=True success=True turns=17 repair effort=120.8s call=174s wrong=[]
+
+condition    policy            success  wrong/dlg  repair s/dlg
+clean        confirm                0%       1.00          56.9
+clean        spell                  0%       3.50          64.5
+clean        type                  50%       0.50         101.0
+
+Logs: logs/smoke_7220283/full_repairs/ (attempts, dialogues); error_scripts input: logs/smoke_7220283/full_repairs/for_eval/
+
+real	1m17.437s
+user	1m7.432s
+sys	0m4.368s
+
+################ 6/6 measurement chain on mock data (checks error_scripts' packages on PACE)
+noise:5      accept                20%       1.07           0.0              259
+
+Logs: logs/smoke_7220283/mock_fit/ (attempts, dialogues, replays); error_scripts input: logs/smoke_7220283/mock_fit/for_eval/
+Mock ASR: these numbers test the plumbing only. Do not report them.
+Repair outcomes (pooled over slot types):
+  confirm|*  r=0.737  e=0.001  c=  6.0s  (n_wrong=55, n_right=1280)
+  spell|*    r=0.474  e=0.207  c=  9.9s  (n_wrong=55, n_right=1280)
+  type|*     r=0.684  e=0.165  c= 14.5s  (n_wrong=55, n_right=1280)
+Saved logs/smoke_7220283/mock_models/estimator.json and logs/smoke_7220283/mock_models/outcomes.json
+music:5      spell                  0%       5.57          87.0
+music:5      type                  13%       2.07         109.3
+music:5      u2r                   33%       0.73           8.8
+
+Logs: logs/smoke_7220283/mock_eval/ (attempts, dialogues); error_scripts input: logs/smoke_7220283/mock_eval/for_eval/
+Mock ASR: these numbers test the plumbing only. Do not report them.
+wrote ['episode_summary.csv', 'estimate_by_type.csv', 'estimate_error.csv', 'first_error_km.csv', 'mistake_types.csv', 'per_dialogue.csv', 'policy_tests.csv', 'reliability_music_5_p_hat.png']
+
+== smoke test done. Outputs in logs/smoke_7220283/ ; read logs/smoke-7220283.out
+   seconds per dialogue: see the 'real' times of step 5 (2 goals x conditions)
+---------------------------------------
+Begin Slurm Epilog: Nov-21-2026 08:25:39
+Job ID:        7220283
+User ID:       ynieh3
+Account:       ece
+Job name:      u2r-smoke
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=03:14:32,vmem=0,walltime=00:24:19,mem=24458748K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-010-10-0
+---------------------------------------

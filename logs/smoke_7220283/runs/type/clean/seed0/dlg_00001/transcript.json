@@ -1,0 +1,223 @@
+[
+  {
+    "speaker": "assistant",
+    "text": "Hello, how can I help you today?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "I'm looking to book a table for two on Sunday at 18:45.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the number of people into the chat box, please?",
+    "action": "type",
+    "slot": "people"
+  },
+  {
+    "speaker": "customer",
+    "text": "2",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "2"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the day into the chat box, please?",
+    "action": "type",
+    "slot": "day"
+  },
+  {
+    "speaker": "customer",
+    "text": "sunday",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "sunday"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the time into the chat box, please?",
+    "action": "type",
+    "slot": "time"
+  },
+  {
+    "speaker": "customer",
+    "text": "18:45",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "18:45"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Which area would you like?",
+    "action": "normal",
+    "slot": "area"
+  },
+  {
+    "speaker": "customer",
+    "text": "I want to book somewhere in the centre.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the area into the chat box, please?",
+    "action": "type",
+    "slot": "area"
+  },
+  {
+    "speaker": "customer",
+    "text": "centre",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "centre"
+  },
+  {
+    "speaker": "assistant",
+    "text": "What price range are you looking for?",
+    "action": "normal",
+    "slot": "pricerange"
+  },
+  {
+    "speaker": "customer",
+    "text": "I want a moderate price range.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the price range into the chat box, please?",
+    "action": "type",
+    "slot": "pricerange"
+  },
+  {
+    "speaker": "customer",
+    "text": "moderate",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "moderate"
+  },
+  {
+    "speaker": "assistant",
+    "text": "What kind of food would you like?",
+    "action": "normal",
+    "slot": "food"
+  },
+  {
+    "speaker": "customer",
+    "text": "I want international food.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the type of food into the chat box, please?",
+    "action": "type",
+    "slot": "food"
+  },
+  {
+    "speaker": "customer",
+    "text": "international",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "international"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Can I have your name, please?",
+    "action": "normal",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "My name is Dennis Boone.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the name into the chat box, please?",
+    "action": "type",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "Dennis Boone",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "Dennis Boone"
+  },
+  {
+    "speaker": "assistant",
+    "text": "What is your email address?",
+    "action": "normal",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "My email is dennis.b@outlook.com.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the email address into the chat box, please?",
+    "action": "type",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "dennis.b@outlook.com",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "dennis.b@outlook.com"
+  },
+  {
+    "speaker": "assistant",
+    "text": "And a phone number we can reach you on?",
+    "action": "normal",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "My phone number is 377 963 1537.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the phone number into the chat box, please?",
+    "action": "type",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "377 963 1537",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "377 963 1537"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Great, your booking is confirmed. Is there anything else?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "No, that's all. Thank you.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  }
+]

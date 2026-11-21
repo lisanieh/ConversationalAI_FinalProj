@@ -1,0 +1,184 @@
+[
+  {
+    "speaker": "assistant",
+    "text": "Hello, how can I help you today?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "I'm looking to book a table for 8 people on Tuesday at 18:00.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the number of people into the chat box, please?",
+    "action": "type",
+    "slot": "people"
+  },
+  {
+    "speaker": "customer",
+    "text": "8",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "8"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the day into the chat box, please?",
+    "action": "type",
+    "slot": "day"
+  },
+  {
+    "speaker": "customer",
+    "text": "tuesday",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "tuesday"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the time into the chat box, please?",
+    "action": "type",
+    "slot": "time"
+  },
+  {
+    "speaker": "customer",
+    "text": "18:00",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "18:00"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Which area would you like?",
+    "action": "normal",
+    "slot": "area"
+  },
+  {
+    "speaker": "customer",
+    "text": "I don't have a preference for the area.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What price range are you looking for?",
+    "action": "normal",
+    "slot": "pricerange"
+  },
+  {
+    "speaker": "customer",
+    "text": "I don't have a preference for the price range.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What kind of food would you like?",
+    "action": "normal",
+    "slot": "food"
+  },
+  {
+    "speaker": "customer",
+    "text": "I don't have a preference for the type of food.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Can I have your name, please?",
+    "action": "normal",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "My name is Megan Chang.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the name into the chat box, please?",
+    "action": "type",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "Megan Chang",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "Megan Chang"
+  },
+  {
+    "speaker": "assistant",
+    "text": "What is your email address?",
+    "action": "normal",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "My email is meganchang50@gmail.com.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the email address into the chat box, please?",
+    "action": "type",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "meganchang50@gmail.com",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "meganchang50@gmail.com"
+  },
+  {
+    "speaker": "assistant",
+    "text": "And a phone number we can reach you on?",
+    "action": "normal",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "My phone number is 687 847 5866.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Sorry, it's a bit noisy. Could you type the phone number into the chat box, please?",
+    "action": "type",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "687 847 5866",
+    "path": "type",
+    "mode": "typed",
+    "typed_text": "687 8e7 586y"
+  },
+  {
+    "speaker": "assistant",
+    "text": "Great, your booking is confirmed. Is there anything else?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "No, that's all. Thank you.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  }
+]

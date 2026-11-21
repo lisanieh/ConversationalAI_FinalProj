@@ -1,0 +1,26 @@
+{
+  "dialogue_id": "dlg_00001",
+  "domain": "hotel",
+  "slots": {
+    "area": "north",
+    "day": "monday",
+    "people": "4",
+    "stay": "5",
+    "name": "Dennis Boone",
+    "email": "dennis.b@outlook.com",
+    "phone": "377 963 1537"
+  },
+  "can_type": true,
+  "voice": "bm_george",
+  "seed": 1,
+  "source": "multiwoz22:PMUL3096.json",
+  "slot_order": [
+    "area",
+    "day",
+    "people",
+    "stay",
+    "name",
+    "email",
+    "phone"
+  ]
+}

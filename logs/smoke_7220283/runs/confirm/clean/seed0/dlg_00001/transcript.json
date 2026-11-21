@@ -1,0 +1,223 @@
+[
+  {
+    "speaker": "assistant",
+    "text": "Hello, how can I help you today?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "I'm looking to book a table for two on Sunday at 18:45.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the number of people is 2, is that right?",
+    "action": "confirm",
+    "slot": "people"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the day is sunday, is that right?",
+    "action": "confirm",
+    "slot": "day"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the time is 18:45, is that right?",
+    "action": "confirm",
+    "slot": "time"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Which area would you like?",
+    "action": "normal",
+    "slot": "area"
+  },
+  {
+    "speaker": "customer",
+    "text": "The centre area.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the area is centre, is that right?",
+    "action": "confirm",
+    "slot": "area"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What price range are you looking for?",
+    "action": "normal",
+    "slot": "pricerange"
+  },
+  {
+    "speaker": "customer",
+    "text": "Moderate.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the price range is moderate, is that right?",
+    "action": "confirm",
+    "slot": "pricerange"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What kind of food would you like?",
+    "action": "normal",
+    "slot": "food"
+  },
+  {
+    "speaker": "customer",
+    "text": "International.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the type of food is international, is that right?",
+    "action": "confirm",
+    "slot": "food"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Can I have your name, please?",
+    "action": "normal",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "My name is Dennis Boone.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the name is Dennis Boone, is that right?",
+    "action": "confirm",
+    "slot": "name"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "What is your email address?",
+    "action": "normal",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "dennis.b@outlook.com.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Just to confirm, the email address is dennis.b@outlook.com, is that right?",
+    "action": "confirm",
+    "slot": "email"
+  },
+  {
+    "speaker": "customer",
+    "text": "Yes, that's right.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "And a phone number we can reach you on?",
+    "action": "normal",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "377 963 1537.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "And a phone number we can reach you on?",
+    "action": "normal",
+    "slot": "phone"
+  },
+  {
+    "speaker": "customer",
+    "text": "377 963 1537.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  },
+  {
+    "speaker": "assistant",
+    "text": "Great, your booking is confirmed. Is there anything else?",
+    "action": "normal",
+    "slot": null
+  },
+  {
+    "speaker": "customer",
+    "text": "No, that's all. Thank you.",
+    "path": "speak",
+    "mode": "speech",
+    "typed_text": null
+  }
+]
