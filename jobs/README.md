@@ -10,10 +10,15 @@ scp -r ConversationalAI_FinalProj <gt-user>@login-ice.pace.gatech.edu:~/scratch/
 ssh <gt-user>@login-ice.pace.gatech.edu
 cd ~/scratch/ConversationalAI_FinalProj
 mkdir -p logs                          # Slurm needs it before the first job
-bash jobs/setup_env.sh                 # about 20-30 min: conda env, vLLM, Kokoro, Whisper, LLM weights
+bash jobs/setup_env.sh                 # about 15 min: small env with Kokoro, Whisper and error_scripts
 ```
 
-**Llama access.** Llama is gated. Accept the license at huggingface.co/meta-llama/Llama-3.1-8B-Instruct first. The setup script then asks for your HF token once.
+The jobs follow the course template (`CAI_A4 run_agent.sbatch`):
+- vLLM runs from the course's shared env `/storage/ice1/0/4/lheck6/CS6604_ECE6256/envs/CAI_A4`, with models from the shared offline HF cache.
+- Ports come from the job id, so two jobs on one node can't reach each other's server.
+- `PYTHONNOUSERSITE=1` stops packages in `~/.local` from being used.
+
+The setup script reports whether Llama-3.1-8B and Qwen2.5-7B are in the shared cache. Any model that's missing is downloaded to `~/scratch/hf`. For Llama, that needs the license accepted on huggingface.co and an HF login.
 
 **MUSAN noise data** (11 GB, only if it isn't there yet):
 
@@ -22,7 +27,7 @@ cd ~/scratch && wget https://www.openslr.org/resources/17/musan.tar.gz && tar xz
 ln -sfn ~/scratch/musan ~/scratch/ConversationalAI_FinalProj/datasets/musan
 ```
 
-**GPU line.** Check the `#SBATCH --gres=gpu:H100:1` line against your course allocation (`sinfo -o "%P %G"`). Some courses also need a `-q` or `-A` line. With two 8B LLMs plus Whisper, use an 80 GB card. On a 40–48 GB card, `common.sh` serves Llama alone for both customer and agent, and logs a warning.
+**GPU line.** The jobs use `--gres=gpu:H100:1`, the same line as the course template. An H100 has 80 GB, enough for Qwen and Llama at 38% of the GPU each, plus Whisper and Kokoro. On a smaller card, `common.sh` serves Llama alone for both customer and agent and logs a warning. You can force that with `SAME_MODEL=1`.
 
 ## 1. Smoke test (about 30–60 min)
 
@@ -36,7 +41,7 @@ It runs six steps, smallest first, so a failure tells you which piece broke:
 
 | Step | What it checks | If it fails |
 |---|---|---|
-| 1 | Unit tests (48) | Code or package problem |
+| 1 | Unit tests (49) | Code or package problem |
 | 2 | `jobs/check_audio.py`: Kokoro → MUSAN → Whisper on names, spelled email, phone and time, with clean, noise:10 and music:5 audio | TTS, Whisper or MUSAN. Listen to `logs/smoke_<id>/audio_check/*.wav` |
 | 3 | One audio dialogue without LLMs | Audio connector inside the dialogue loop |
 | 4 | Starts vLLM: Qwen on :8000 (customer), Llama on :8001 (agent) | `logs/smoke_<id>/vllm_*.log` |
@@ -63,7 +68,7 @@ done
 When all three finish, train on the login node. This takes about a minute on CPU:
 
 ```bash
-module load anaconda3 && eval "$(conda shell.bash hook)" && conda activate ~/scratch/envs/u2r
+source /usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh && conda activate ~/scratch/envs/u2r
 python -m assistant_agent.train --attempts logs/fit_s*/attempts.jsonl \
        --replays logs/fit_s*/replays.jsonl --out models/fit
 ```

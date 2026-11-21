@@ -20,12 +20,23 @@ from robot_customer.goal_builder import AREAS, DAYS, FOODS, PRICE_RANGES
 from .config import ALL_SLOTS, DOMAINS
 from .llm import parse_json
 from .prompts import EXTRACT_PROMPT
-from .values import DIGIT_WORDS, DONTCARE, DONTCARE_RE, digits_from
+from .values import DIGIT_WORDS, DONTCARE, DONTCARE_RE, digits_from, spoken_email_to_written
 
 _NUM = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten)"
 _EMAIL_RE = re.compile(r"[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}")
 _SPOKEN_EMAIL_RE = re.compile(r"\b([a-z0-9]+(?:\s+(?:dot|dash|underscore|plus|[a-z0-9]+))*"
                               r"\s+at\s+[a-z0-9]+(?:\s+dot\s+[a-z]+)+)\b")
+_EMAIL_LEAD = re.compile(r"^.*\b(?:e-?mail(?: address)?(?: is|'s)?|it's|it is|that's|that is|sure|yes|okay|ok)\b[\s,:]*")
+
+
+def _email_answer(low: str) -> str | None:
+    """An email in an answer to 'what is your email?', in any mix Whisper writes:
+    'varun.k at gmail.com', 'megan chang 50 at gmail dot com', 'meganchang50@gmail.com'."""
+    s = _EMAIL_LEAD.sub("", low.strip(), count=1)
+    m = _EMAIL_RE.search(spoken_email_to_written(s))
+    return m.group().strip(".") if m else None
+
+
 _TIME_RE = re.compile(r"\b(\d{1,2}(?:[:.]\d{2})?\s*(?:[ap]\.?\s?m\b\.?)?|\d{1,2}[:.]\d{2})|"
                       r"\b((?:half|quarter) (?:past|to) [a-z]+|noon|midday)\b|"
                       r"\b((?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)"
@@ -123,12 +134,12 @@ class RuleExtractor:
 
         # Contact details.
         m = _EMAIL_RE.search(low)
-        if m:
+        if asked_slot == "email":
+            e = _email_answer(low)
+            if e:
+                out["email"] = e
+        elif m:
             out["email"] = m.group().strip(".")
-        elif asked_slot == "email":
-            m = _SPOKEN_EMAIL_RE.search(low)
-            if m:
-                out["email"] = m.group(1)
         span = _digit_span(low)
         if span and len(digits_from(span)) >= 7 and (asked_slot == "phone" or re.search(r"\d{3}\D{0,2}\d{3}\D{0,2}\d{4}", low)):
             out["phone"] = span
