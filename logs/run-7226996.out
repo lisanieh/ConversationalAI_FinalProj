@@ -1,0 +1,53 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-21-2026 13:59:28
+Job ID:    7226996
+User ID:   fgao76
+Account:   ece
+Job name:  u2r-run
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Sat Nov 21 02:04:41 PM EST 2026  node=atl1-1-03-011-13-0.pace.gatech.edu  job=7226996  env=/home/hice1/fgao76/scratch/envs/u2r
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-f204cb72-2a0d-4d80-9776-9f384a82ae24)
+== vLLM meta-llama/Llama-3.1-8B-Instruct on :26996 (gpu util 0.38, HF_HOME=/storage/ice1/0/4/lheck6/CS6604_ECE6256/hf_cache)
+   ready
+== vLLM Qwen/Qwen2.5-7B-Instruct on :46996 (gpu util 0.38, HF_HOME=/home/hice1/fgao76/scratch/hf)
+   ready
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+
+condition    policy            success  wrong/dlg  repair s/dlg  replayed values
+clean        accept                32%       1.00           0.0              407
+noise:20     accept                34%       1.00           0.0              408
+noise:15     accept                34%       0.96           0.0              408
+noise:10     accept                38%       0.94           0.0              408
+noise:5      accept                30%       1.18           0.0              411
+
+Logs: logs/fit_s2/ (attempts, dialogues, replays); error_scripts input: logs/fit_s2/for_eval/
+
+real	165m39.592s
+user	273m5.703s
+sys	0m21.150s
+== done: logs/fit_s2
+---------------------------------------
+Begin Slurm Epilog: Nov-21-2026 16:57:45
+Job ID:        7226996
+User ID:       fgao76
+Account:       ece
+Job name:      u2r-run
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=23:46:48,vmem=0,walltime=02:58:21,mem=19863008K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-011-13-0
+---------------------------------------

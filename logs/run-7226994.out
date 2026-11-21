@@ -1,0 +1,24 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-21-2026 13:59:27
+Job ID:    7226994
+User ID:   fgao76
+Account:   ece
+Job name:  u2r-run
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Sat Nov 21 02:04:41 PM EST 2026  node=atl1-1-03-011-28-0.pace.gatech.edu  job=7226994  env=/home/hice1/fgao76/scratch/envs/u2r
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-073fc156-64f4-f86d-16d5-ef2b87fc6c08)
+FATAL: torch cannot use the GPU on atl1-1-03-011-28-0.pace.gatech.edu. Resubmit with --exclude=atl1-1-03-011-28-0
+---------------------------------------
+Begin Slurm Epilog: Nov-21-2026 14:04:43
+Job ID:        7226994
+User ID:       fgao76
+Account:       ece
+Job name:      u2r-run
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=00:42:32,vmem=0,walltime=00:05:19,mem=1312088K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-011-28-0
+---------------------------------------
