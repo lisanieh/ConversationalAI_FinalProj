@@ -57,5 +57,5 @@ hf download Qwen/Qwen2.5-7B-Instruct
 echo
 echo "Done. Env: $ENV"
 echo "MUSAN (11 GB) if not there yet (use -c to support resume on unstable network):"
-echo "  cd $SCR && wget -c https://www.openslr.org/resources/17/musan.tar.gz && tar xzf musan.tar.gz"
+echo "  cd $SCR && curl -k -L -C - -o musan.tar.gz https://www.openslr.org/resources/17/musan.tar.gz && tar xzf musan.tar.gz"
 echo "  ln -sfn $SCR/musan $(pwd)/datasets/musan"
