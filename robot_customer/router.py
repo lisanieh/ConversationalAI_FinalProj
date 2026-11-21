@@ -25,6 +25,7 @@ class Path(str, Enum):
     SPELL = "spell"
     TYPE = "type"
     CANNOT_TYPE = "cannot_type"   # speak path with the fixed refusal line
+    NO_VALUE = "no_value"         # spell/type asked for a slot not in the goal: fixed line
 
 
 VALID_ACTIONS = {"normal", "accept", "confirm", "spell", "type"}
@@ -48,9 +49,10 @@ def route(turn: AssistantTurn, goal: Goal) -> Path:
         raise ValueError(f"Unknown assistant action {turn.action!r}; expected one of {sorted(VALID_ACTIONS)}")
     if action in ("spell", "type"):
         if turn.slot not in goal.slots:
-            # Asked to spell/type something the customer has no value for:
-            # let the LLM answer naturally ("I don't have a preference").
-            return Path.SPEAK
+            # Asked to spell/type something the customer has no value for: a
+            # fixed "no preference" line. Leaving it to the LLM made it spell
+            # "a n y" (heard as "But then why?") in the PACE smoke test.
+            return Path.NO_VALUE
         if action == "spell":
             return Path.SPELL
         return Path.TYPE if goal.can_type else Path.CANNOT_TYPE

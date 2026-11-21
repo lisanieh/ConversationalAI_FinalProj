@@ -79,6 +79,9 @@ class RobotCustomer:
         elif path is RoutePath.CANNOT_TYPE:
             pkg.true_text = prompts.CANNOT_TYPE_LINE
             pkg.spoken_text = to_spoken(prompts.CANNOT_TYPE_LINE)
+        elif path is RoutePath.NO_VALUE:
+            pkg.true_text = prompts.NO_PREFERENCE_LINE
+            pkg.spoken_text = to_spoken(prompts.NO_PREFERENCE_LINE)
         elif path is RoutePath.SPELL:
             pkg.true_text = value
             pkg.spoken_text = spell_out(value, slot)
@@ -112,7 +115,20 @@ class RobotCustomer:
             self.brain.asked_action = assistant.action
 
     def _brain_history(self) -> list[dict]:
-        return [{"speaker": h["speaker"], "text": h["text"]} for h in self.history]
+        """What the LLM sees. Spelled/typed turns are stored as the bare value
+        ("8", "tuesday"); shown that way, Qwen copied the style and answered
+        later questions with bare words ("centre", "no preference") that the
+        agent's extractor missed (PACE smoke test 7203587). So the LLM sees a
+        sentence instead."""
+        out = []
+        for h in self.history:
+            text = h["text"]
+            if h["speaker"] == "customer" and h.get("path") == RoutePath.SPELL.value:
+                text = f"I spelled it out: {text}."
+            elif h["speaker"] == "customer" and h.get("path") == RoutePath.TYPE.value:
+                text = "I typed it into the chat box."
+            out.append({"speaker": h["speaker"], "text": text})
+        return out
 
     def _audio_path(self, turn: int) -> str:
         base = self.out_dir or Path(self.goal.dialogue_id)
@@ -138,7 +154,8 @@ class RobotCustomer:
         text = (f"PROMPT_VERSION: {prompts.PROMPT_VERSION}\n\n"
                 f"=== CUSTOMER_SYSTEM_PROMPT (template) ===\n{prompts.CUSTOMER_SYSTEM_PROMPT}\n"
                 f"=== CUSTOMER_SYSTEM_PROMPT (filled for this dialogue) ===\n{system}\n"
-                f"=== CANNOT_TYPE_LINE ===\n{prompts.CANNOT_TYPE_LINE}\n")
+                f"=== CANNOT_TYPE_LINE ===\n{prompts.CANNOT_TYPE_LINE}\n"
+                f"=== NO_PREFERENCE_LINE ===\n{prompts.NO_PREFERENCE_LINE}\n")
         (folder / "prompts.txt").write_text(text, encoding="utf-8")
 
 

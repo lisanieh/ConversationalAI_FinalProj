@@ -68,6 +68,23 @@ class TestSpeechText(unittest.TestCase):
         self.assertEqual(spell_out("404 555 1234", "phone"),
                          "four. oh. four, five. five. five, one. two. three. four.")
 
+    def test_spell_name_and_time_smoke_test_fixes(self):
+        # Words are separated by the spoken word "space" (Whisper drops commas).
+        self.assertEqual(spell_out("Megan Chang", "name"), "M. E. G. A. N, space, C. H. A. N. G.")
+        # Times stay digit by digit (the form the agent's decoder expects).
+        self.assertEqual(spell_out("18:00", "time"), "one. eight. zero. zero.")
+
+    def test_spelled_forms_decode_in_agent(self):
+        """What the agent's decoder rebuilds from our spelled text, both as written
+        and in the forms Whisper produced in the PACE smoke test."""
+        from assistant_agent.repair import decode_spelled
+        for slot, value in [("name", "Megan Chang"), ("name", "Dennis Boone"),
+                            ("time", "18:00"), ("time", "18:45"), ("people", "8"),
+                            ("email", "dennis.b@outlook.com"), ("phone", "687 847 5866")]:
+            self.assertEqual(decode_spelled(spell_out(value, slot), slot),
+                             value.lower() if slot != "time" else value, (slot, value))
+        self.assertEqual(decode_spelled("D-E-N-N-I-S space B-O-O-N-E.", "name"), "dennis boone")
+
 
 class TestTypos(unittest.TestCase):
     def test_zero_rate_is_identity(self):
@@ -99,6 +116,20 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(route(AssistantTurn("?", "type", "email"), g), RoutePath.TYPE)
         g.can_type = False
         self.assertEqual(route(AssistantTurn("?", "type", "email"), g), RoutePath.CANNOT_TYPE)
+        # spell/type for a slot the customer has no value for -> fixed line, no LLM
+        g.slots.pop("food", None)
+        self.assertEqual(route(AssistantTurn("?", "spell", "food"), g), RoutePath.NO_VALUE)
+        self.assertEqual(route(AssistantTurn("?", "type", "food"), g), RoutePath.NO_VALUE)
+
+    def test_no_value_reply_is_fixed_line(self):
+        from robot_customer import prompts
+        g = GoalBuilder().build(3)
+        g.slots.pop("food", None)
+        c = RobotCustomer(g, ScriptedBrain())
+        p = c.respond({"text": "Could you spell the food?", "action": "spell", "slot": "food"})
+        self.assertEqual(p.path, "no_value")
+        self.assertEqual(p.true_text, prompts.NO_PREFERENCE_LINE)
+        self.assertEqual(p.mode, "speech")
 
     def test_unknown_action(self):
         with self.assertRaises(ValueError):
@@ -188,6 +219,19 @@ class TestCustomer(unittest.TestCase):
         self.assertFalse(p1.done)
         p2 = c.respond({"text": "Your booking is confirmed.", "action": "normal", "slot": None})
         self.assertTrue(p2.done)
+
+    def test_brain_sees_sentences_for_spell_and_type(self):
+        g = GoalBuilder().build(11)
+        g.can_type = True
+        c = RobotCustomer(g, ScriptedBrain(), typo_rate=0.0)
+        c.respond({"text": "Hello", "action": "normal", "slot": None})
+        c.respond({"text": "Spell your email", "action": "spell", "slot": "email"})
+        c.respond({"text": "Type your phone", "action": "type", "slot": "phone"})
+        seen = [h["text"] for h in c._brain_history() if h["speaker"] == "customer"]
+        self.assertEqual(seen[1], f"I spelled it out: {g.slots['email']}.")
+        self.assertEqual(seen[2], "I typed it into the chat box.")
+        # the saved transcript still holds the exact values
+        self.assertEqual(c.history[3]["text"], g.slots["email"])
 
     def test_turn_limit(self):
         g = GoalBuilder().build(4)

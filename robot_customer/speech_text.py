@@ -156,13 +156,18 @@ def spell_out(value: str, slot: str | None = None) -> str:
     Common TLDs ('com', 'org', ...) are said as words, as people do.
     """
     value = value.strip()
+    # Times stay digit by digit ("one. eight. zero. zero."): the agent's decoder
+    # and tests expect that form. Whisper sometimes merges the digits ("1-800");
+    # that is a genuine spelling error the testbed measures.
     if slot == "phone" or re.fullmatch(r"[\d\s().+\-]+", value):
         d = re.sub(r"\D", "", value)
         groups = [d[:3], d[3:6], d[6:]] if len(d) == 10 else [d]
         return ", ".join(". ".join(DIGIT_WORDS[int(c)] for c in g) for g in groups) + "."
 
-    # Each whitespace-separated word ("Varun", "Kamath") is spelled on its own
-    # and words are joined with a comma, giving a longer pause between them.
+    # Each whitespace-separated word ("Megan", "Chang") is spelled on its own and
+    # words are joined with the spoken word "space". A comma alone was dropped by
+    # Whisper ("D-E-N-N-I-S-B-O-O-N-E"), merging the words; the agent's decoder
+    # splits on "space".
     tlds = {"com", "org", "net", "edu", "gov"}
     words = []
     for word in value.split():
@@ -180,4 +185,4 @@ def spell_out(value: str, slot: str | None = None) -> str:
             else:
                 units.extend(c.upper() for c in tok)
         words.append(". ".join(units))
-    return ", ".join(words) + "."
+    return ", space, ".join(words) + "."
