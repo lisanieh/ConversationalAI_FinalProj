@@ -1,0 +1,53 @@
+{
+  "phase": null,
+  "policies": [
+    "accept",
+    "spell",
+    "type",
+    "u2r"
+  ],
+  "conditions": [
+    "music:5"
+  ],
+  "channel": "mock",
+  "n": 15,
+  "first_goal": 0,
+  "seeds": [
+    0,
+    1
+  ],
+  "replay": false,
+  "multiwoz": null,
+  "cannot_type_rate": 0.2,
+  "typo_rate": 0.02,
+  "max_turns": 40,
+  "effort": null,
+  "musan": "datasets/musan",
+  "whisper_model": "small.en",
+  "K": 5,
+  "sample_temperature": 0.7,
+  "audio_device": null,
+  "save_audio": null,
+  "brain": "scripted",
+  "customer_url": "http://localhost:11434/v1",
+  "customer_model": "qwen2.5:7b-instruct",
+  "agent_extractor": "rule",
+  "agent_url": "http://localhost:8001/v1",
+  "agent_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "estimator": "logs/smoke_7212405/mock_models/estimator.json",
+  "outcomes": "logs/smoke_7212405/mock_models/outcomes.json",
+  "ask_llm": false,
+  "logdir": "logs/smoke_7212405/mock_eval",
+  "out": "runs",
+  "no_save_dialogues": true,
+  "show": false,
+  "effort_model": {
+    "speech_wps": 2.5,
+    "listen_wps": 2.7,
+    "spell_ups": 1.6,
+    "typing_cps": 3.0,
+    "type_switch_s": 4.0,
+    "turn_latency_s": 0.5,
+    "source": "defaults"
+  }
+}

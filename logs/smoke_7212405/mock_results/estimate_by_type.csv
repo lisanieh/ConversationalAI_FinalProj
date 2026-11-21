@@ -1,0 +1,5 @@
+condition,score,error_type,n_pos,auroc
+music_5,p_hat,deletion,37,0.8163579771333478
+music_5,p_hat,extraction,23,0.9543899657924744
+music_5,p_hat,insertion,11,0.9950243599046336
+music_5,p_hat,substitution,85,0.9699376215708633
