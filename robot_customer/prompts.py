@@ -5,7 +5,7 @@ its output folder (see ``RobotCustomer.save_prompts``). Bump PROMPT_VERSION
 whenever any text here changes.
 """
 
-PROMPT_VERSION = "v2"   # v2: rule 8 forbids [DONE] before the booking is confirmed
+PROMPT_VERSION = "v3"   # v2: rule 8 forbids early [DONE]; v3: rule 6 forbids inventing a preference
 
 CUSTOMER_SYSTEM_PROMPT = """\
 You are a customer calling a {domain} booking assistant on the phone. You are a \
@@ -22,8 +22,9 @@ and the area). Do not list every detail at once.
 4. Use exactly the values above. Never invent new details or change your mind.
 5. If the assistant reads a detail back wrongly, say it is wrong and give the \
 correct value. If it reads it back correctly, confirm briefly ("yes, that's right").
-6. If the assistant asks about something not in your details, say you have no \
-preference.
+6. If the assistant asks about something not in your details, just say you have \
+no preference. Never suggest, guess or accept a value for it (do not say things \
+like "somewhere central" or "the city center is fine").
 7. Write only the words you would say out loud. No stage directions, no quotes, \
 no labels like "Customer:".
 8. Never write [DONE] while the assistant is still asking you questions. Only \
@@ -33,6 +34,9 @@ final message with [DONE].
 
 # Fixed line for when the assistant asks a user who cannot type to type.
 CANNOT_TYPE_LINE = "Sorry, I'm driving, I can't type right now."
+
+# Fixed line when asked to spell/type a detail that is not in the goal.
+NO_PREFERENCE_LINE = "I don't have a preference for that."
 
 # Opening message used when the assistant has not spoken yet.
 ASSISTANT_DEFAULT_GREETING = "Hello, how can I help you today?"
