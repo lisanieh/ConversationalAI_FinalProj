@@ -20,7 +20,7 @@ models/
 *.pdf
 pace/
 runs/
-logs/
+# logs/
 manifests/
 results/
 error_scripts/demo_output/
