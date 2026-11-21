@@ -28,7 +28,8 @@ ACTIONS = ("accept", "confirm", "spell", "type")
 # about a minute to notice and fix"; it is swept in the robustness analysis.
 # "reask" is the plain voice re-ask used after a "no" to a confirmation.
 EFFORT = {"accept": 0.0, "confirm": 3.0, "spell": 10.0, "type": 12.0, "reask": 4.0,
-          "readback": 3.0, "retype": 12.0}     # readback / retype: the checks after a typed value
+          "readback": 3.0, "retype": 12.0,     # readback / retype: the checks after a typed value
+          "recheck": 3.0}                      # reading back a spoken correction
 C_W = 60.0
 
 SLOT_TYPE = {

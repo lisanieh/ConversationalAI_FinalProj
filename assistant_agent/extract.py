@@ -20,7 +20,7 @@ from robot_customer.goal_builder import AREAS, DAYS, FOODS, PRICE_RANGES
 from .config import ALL_SLOTS, DOMAINS
 from .llm import parse_json
 from .prompts import EXTRACT_PROMPT
-from .values import DIGIT_WORDS, DONTCARE, DONTCARE_RE, digits_from, spoken_email_to_written
+from .values import DIGIT_WORDS, DONTCARE, DONTCARE_RE, canonical, digits_from, spoken_email_to_written
 
 _NUM = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten)"
 _EMAIL_RE = re.compile(r"[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}")
@@ -189,4 +189,13 @@ class LLMExtractor:
                 slots[asked_slot] = rule_vals[asked_slot]
                 self.filled_from_rules = asked_slot
             dom = dom or rule_dom
+        elif asked_slot == "email":
+            # Whisper splits a spoken local part into words ("Meghan Chang 5-0 at gmail.com")
+            # and the LLM keeps only the last one ("5-0@gmail.com"). The rules join every
+            # word before "at"; take theirs when the LLM's value is just its tail.
+            _, rule_vals = self.fallback.extract(text, "email", domain)
+            ours, theirs = canonical("email", slots["email"]), canonical("email", rule_vals.get("email"))
+            if theirs and ours and theirs != ours and theirs.endswith(ours):
+                slots["email"] = rule_vals["email"]
+                self.filled_from_rules = "email"
         return dom, slots

@@ -61,6 +61,8 @@ def request(action: str, slot: str, value: str = "") -> str:
         return f"Sorry about that. Could you tell me the {label} again?"
     if action == "readback":                      # after a typed value, before committing it
         return f"Thanks. I have {display(slot, value)}, is that right?"
+    if action == "recheck":                       # after "No, it's ...": read the correction back
+        return f"Sorry about that. So the {label} is {display(slot, value)}, is that right?"
     if action == "retype":
         return f"Sorry, could you type the {label} again, please?"
     return question(slot)

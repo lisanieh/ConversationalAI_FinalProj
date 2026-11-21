@@ -18,6 +18,8 @@ Rules the agent follows:
   * One question per turn: several heard values queue their repairs.
   * "No" to a confirmation without a new value -> spell (name/email/phone) or
     a plain re-ask (other slots). That follow-up is committed as it is heard.
+  * "No, it's X" for name/email/phone: X was heard by the same recognizer, so
+    it is read back once ("recheck"); a second "no" -> spell. Other slots take X.
   * Once the customer says they cannot type, TYPE is never asked again; a
     TYPE choice becomes SPELL (logged as ``spell_fallback``).
   * A slot that gets no value after ``max_asks`` questions is left empty.
@@ -180,12 +182,24 @@ class U2RAgent:
             self._commit(att, decode_spelled(heard.text, p.slot) or hyp)
         elif p.action == "confirm":
             verdict, value = decode_confirm(heard.text, p.slot, hyp, self.rules)
-            if verdict == "yes" or value:
-                self._commit(att, value or hyp)
+            if verdict == "yes":
+                self._commit(att, hyp)
+            elif value and p.slot in ENTITY_SLOTS:
+                # "No, it's ..." went through the same recognizer that just got it wrong:
+                # read the correction back once before trusting it.
+                att["correction"] = value
+                att["repair_channel"] = "confirm+recheck"
+                self.queue.insert(0, Pending(p.slot, "recheck", att))
+            elif value:
+                self._commit(att, value)
             else:
-                follow = "spell" if p.slot in ENTITY_SLOTS else "reask"
-                att["repair_channel"] = f"confirm+{follow}"
-                self.queue.insert(0, Pending(p.slot, follow, att))
+                self._follow_up(p.slot, att)
+        elif p.action == "recheck":
+            verdict, _ = decode_confirm(heard.text, p.slot, att["correction"], self.rules)
+            if verdict == "yes":
+                self._commit(att, att["correction"])
+            else:                                     # still wrong: stop using the voice channel
+                self._follow_up(p.slot, att, prefix="confirm+recheck")
         elif p.action == "reask":
             _, vals = self.extractor.extract(heard.text, asked_slot=p.slot, domain=self.domain)
             self._commit(att, canonical(p.slot, vals.get(p.slot)) or hyp)
@@ -197,6 +211,12 @@ class U2RAgent:
             else:                                     # "no": a spoken correction would go through
                 att["retypes"] += 1                   # ASR again, so ask to type it once more
                 self.queue.insert(0, Pending(p.slot, "retype", att))
+
+    def _follow_up(self, slot: str, att: dict, prefix: str = "confirm") -> None:
+        """After a "no": spell an entity, plainly re-ask anything else."""
+        follow = "spell" if slot in ENTITY_SLOTS else "reask"
+        att["repair_channel"] = f"{prefix}+{follow}"
+        self.queue.insert(0, Pending(slot, follow, att))
 
     def _typed(self, att: dict, value: str) -> None:
         """A typed value: read it back before committing, so a typo can be caught."""
@@ -224,7 +244,10 @@ class U2RAgent:
             self.pending = p
             value = ((p.attempt.get("typed_value") if p.action == "readback" else p.attempt["hypothesis"])
                      if p.attempt else "")
-            label = {"reask": "normal", "readback": "confirm", "retype": "type"}.get(p.action, p.action)
+            if p.action == "recheck":
+                value = p.attempt["correction"]
+            label = {"reask": "normal", "readback": "confirm", "retype": "type",
+                     "recheck": "confirm"}.get(p.action, p.action)
             return {"text": request(p.action, p.slot, value), "action": label, "slot": p.slot}
         if not self.turns:
             return self._ask_none(GREETING, "greet")

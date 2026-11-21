@@ -12,6 +12,7 @@ from assistant_agent import (Heard, MockASRChannel, RepairOutcomeModel, RuleExtr
                              SlotErrorEstimator, TextChannel, U2RAgent, make_policy,
                              score_dialogue, slot_features)
 from assistant_agent.estimator import auroc
+from assistant_agent.agent import Pending
 from assistant_agent.policies import U2R
 from assistant_agent.repair import decode_confirm, decode_spelled, is_cannot_type
 from assistant_agent.scoring import classify_error
@@ -138,6 +139,17 @@ class TestLLMExtractor(unittest.TestCase):
         from assistant_agent import LLMExtractor
         dom, vals = LLMExtractor(self.FakeLLM("I think north")).extract("In the north, please.", "area")
         self.assertEqual(vals, {"area": "north"})
+
+    def test_truncated_spoken_email_is_rebuilt(self):
+        """Smoke 7222740: Whisper 'Meghan Chang 5-0 at gmail.com' -> LLM kept only '5-0@gmail.com'."""
+        from assistant_agent import LLMExtractor
+        ex = LLMExtractor(self.FakeLLM('{"domain": null, "slots": {"email": "5-0 at gmail.com"}}'))
+        _, vals = ex.extract("It's Meghan Chang 5-0 at gmail.com.", asked_slot="email")
+        self.assertEqual(canonical("email", vals["email"]), "meghanchang50@gmail.com")
+        ex = LLMExtractor(self.FakeLLM('{"domain": null, "slots": {"email": "dennis.b@outlook.com"}}'))
+        _, vals = ex.extract("dennis.b@outlook.com.", asked_slot="email")
+        self.assertEqual(vals["email"], "dennis.b@outlook.com")             # already whole: LLM kept
+        self.assertIsNone(ex.filled_from_rules)
 
     def test_asked_slot_missing_from_valid_json_comes_from_rules(self):
         """Smoke 7212405: a bare '377 963 1537.' came back as valid JSON with no phone."""
@@ -293,6 +305,40 @@ class TestAgentDialogues(unittest.TestCase):
         run_dialogue(RobotCustomer(goal, ScriptedBrain(), typo_rate=0.15),
                      lambda pkg: no_rb.step(ch(pkg) if pkg else None), max_turns=60)
         self.assertFalse(any("typed_value" in a for a in no_rb.attempts))
+
+    def _drive_texts(self, agent, slot, texts):
+        """Feed customer replies to an agent that just asked for ``slot``."""
+        agent.domain = "restaurant"
+        agent.turns = [{"text": "hi"}]
+        agent.pending = Pending(slot, "normal", None)
+        outs = []
+        for i, t in enumerate(texts, start=1):
+            outs.append(agent.step(Heard(t, turn=i)))
+        return outs
+
+    def test_spoken_correction_is_rechecked(self):
+        """Smoke 7222740: 'No, it's meganchang50...' was heard as megancheng50 and committed."""
+        agent = U2RAgent(make_policy("confirm"), RuleExtractor())
+        outs = self._drive_texts(agent, "email", ["It's meghanchang50 at gmail.com.",
+                                                  "No, it's megancheng50 at gmail.com.",
+                                                  "No, that's wrong."])
+        self.assertEqual(outs[1]["action"], "confirm")
+        self.assertIn("megancheng50@gmail.com", outs[1]["text"])          # the correction is read back
+        self.assertEqual(outs[2]["action"], "spell")                      # second "no" -> spell
+        att = agent.attempts[0]
+        self.assertIsNone(att["committed_value"])
+        self.assertEqual(att["repair_channel"], "confirm+recheck+spell")
+        agent.step(Heard("M. E. G. A. N. C. H. A. N. G. 5. 0. at. G. M. A. I. L. dot. com.", turn=4))
+        self.assertEqual(att["committed_value"], "meganchang50@gmail.com")
+
+        agent = U2RAgent(make_policy("confirm"), RuleExtractor())        # correction confirmed
+        self._drive_texts(agent, "email", ["It's meghanchang50 at gmail.com.",
+                                           "No, it's meganchang50 at gmail.com.", "Yes, that's right."])
+        self.assertEqual(agent.attempts[0]["committed_value"], "meganchang50@gmail.com")
+
+        agent = U2RAgent(make_policy("confirm"), RuleExtractor())        # non-entity: taken directly
+        self._drive_texts(agent, "day", ["On tuesday.", "No, it's thursday."])
+        self.assertEqual(agent.attempts[0]["committed_value"], "thursday")
 
     def test_spell_and_type_only_for_entities(self):
         for spec in ["spell", "type"]:

@@ -172,6 +172,7 @@ def canonical(slot: str, value: str | None) -> str:
     if slot == "email":
         if "@" not in low and re.search(r"\bat\b", low):
             low = spoken_email_to_written(low)
+        low = re.sub(r"(?<=\d)-(?=\d)", "", low)          # Whisper writes "fifty" / "five oh" as "5-0"
         return re.sub(r"\s+", "", low).strip(".")
     if slot == "phone":
         d = digits_from(low)
