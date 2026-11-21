@@ -1,0 +1,64 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-21-2026 00:19:02
+Job ID:    7212174
+User ID:   fgao76
+Account:   ece
+Job name:  u2r-smoke
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Sat Nov 21 12:19:05 AM EST 2026  node=atl1-1-03-011-13-0.pace.gatech.edu  job=7212174  env=/home/hice1/fgao76/scratch/envs/u2r
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-f5786a50-7d36-59bb-7342-7b6751bc30b1)
+
+################ 1/6 unit tests (no models)
+Ran 49 tests in 6.333s
+
+OK
+
+################ 2/6 audio: Kokoro -> MUSAN -> Whisper on 6 sample turns
+Traceback (most recent call last):
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/jobs/check_audio.py", line 95, in <module>
+    main()
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/jobs/check_audio.py", line 46, in main
+    tts = KokoroTTS(save_dir=a.out)
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/assistant_agent/audio.py", line 72, in __init__
+    self.device, self.speed = _device(device), speed
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/assistant_agent/audio.py", line 58, in _device
+    import torch
+ModuleNotFoundError: No module named 'torch'
+!! audio check reported problems (see above)
+
+################ 3/6 one audio dialogue, no LLMs (scripted customer, rule extractor)
+Traceback (most recent call last):
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/run_agent.py", line 262, in <module>
+    main()
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/run_agent.py", line 241, in main
+    audio = make_audio(a)
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/run_agent.py", line 86, in make_audio
+    tts = KokoroTTS(device=a.audio_device, save_dir=save / "clean" if save else None)
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/assistant_agent/audio.py", line 72, in __init__
+    self.device, self.speed = _device(device), speed
+  File "/storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/assistant_agent/audio.py", line 58, in _device
+    import torch
+ModuleNotFoundError: No module named 'torch'
+
+real	0m0.938s
+user	0m0.721s
+sys	0m0.062s
+
+################ 4/6 start the LLM servers
+== vLLM meta-llama/Llama-3.1-8B-Instruct on :32174 (gpu util 0.38, HF_HOME=/storage/ice1/0/4/lheck6/CS6604_ECE6256/hf_cache)
+FATAL: vLLM for meta-llama/Llama-3.1-8B-Instruct stopped. End of logs/smoke_7212174/vllm_agent.log:
+/usr/local/pace-apps/manual/packages/anaconda3/2023.03/bin/python: Error while finding module specification for 'vllm.entrypoints.openai.api_server' (ModuleNotFoundError: No module named 'vllm')
+---------------------------------------
+Begin Slurm Epilog: Nov-21-2026 00:19:19
+Job ID:        7212174
+User ID:       fgao76
+Account:       ece
+Job name:      u2r-smoke
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=00:02:48,vmem=0,walltime=00:00:21,mem=130456K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-011-13-0
+---------------------------------------
