@@ -1,0 +1,31 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-20-2026 23:27:46
+Job ID:    7211329
+User ID:   fgao76
+Account:   ece
+Job name:  u2r-smoke
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Fri Nov 20 11:27:50 PM EST 2026  host=atl1-1-03-011-28-0.pace.gatech.edu  job=7211329
+NVIDIA H100 80GB HBM3, 81559 MiB
+
+################ 1/6 unit tests (no models)
+Ran 48 tests in 10.178s
+
+OK
+
+################ 2/6 audio: Kokoro -> MUSAN -> Whisper on 6 sample turns
+[2026-11-20T23:28:40.978] error: *** JOB 7211329 ON atl1-1-03-011-28-0 CANCELLED AT 2026-11-20T23:28:40 DUE to SIGNAL Terminated ***
+---------------------------------------
+Begin Slurm Epilog: Nov-20-2026 23:28:43
+Job ID:        7211329
+User ID:       fgao76
+Account:       ece
+Job name:      u2r-smoke
+Resources:     cpu=8,gres/gpu:h100=1,mem=64G,node=1
+Rsrc Used:     cput=00:07:36,vmem=0,walltime=00:00:57,mem=315760K,energy_used=0
+Partition:     coe-gpu
+QOS:           coe-ice
+Nodes:         atl1-1-03-011-28-0
+---------------------------------------

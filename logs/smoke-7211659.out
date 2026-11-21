@@ -1,0 +1,202 @@
+---------------------------------------
+Begin Slurm Prolog: Nov-20-2026 23:46:00
+Job ID:    7211659
+User ID:   fgao76
+Account:   ece
+Job name:  u2r-smoke
+Partition: coe-gpu
+QOS:       coe-ice
+---------------------------------------
+== Fri Nov 20 11:46:04 PM EST 2026  host=atl1-1-03-011-28-0.pace.gatech.edu  job=7211659
+NVIDIA H100 80GB HBM3, 81559 MiB
+
+################ 1/6 unit tests (no models)
+Ran 48 tests in 12.910s
+
+OK
+
+################ 2/6 audio: Kokoro -> MUSAN -> Whisper on 6 sample turns
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/cuda/__init__.py:228: UserWarning: CUDA initialization: CUDA unknown error - this may be due to an incorrectly set up environment, e.g. changing env variable CUDA_VISIBLE_DEVICES after program start. Setting the available devices to be zero. (Triggered internally at /__w/pytorch/pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+[load] Kokoro + Whisper small.en on cpu + MUSAN {'noise': 930, 'music': 226, 'side_talk': 426} in 119s
+
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+--- name / speak / af_heart: 1.9s audio, TTS 222.5s
+    TTS input : It's Varun Kamath.
+    [clean    ] heard: "It's Var and Cameth."  (8.6s)
+               value: 'Var Cameth' -> WRONG | min_logprob=-0.96 agreement=0.0 snr_est=40.0 no_speech=0.04
+    [noise:10 ] heard: "It's Var and Cameth."  (34.7s)
+               value: 'Var Cameth' -> WRONG | min_logprob=-1.57 agreement=0.0 snr_est=13.7 no_speech=0.02
+    [music:5  ] heard: "It's Varen Kammath."  (3.1s)
+               value: 'Varen Kammath' -> WRONG | min_logprob=-1.24 agreement=0.0 snr_est=10.8 no_speech=0.03
+
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+--- name / spell / bf_emma: 2.9s audio, TTS 2.1s
+    TTS input : V. A. R. U. N, K. A. M. A. T. H.
+    [clean    ] heard: 'VARUNKAMATH'  (3.1s)
+               value: 'varunkamath' -> WRONG | min_logprob=-0.34 agreement=0.6666666666666666 snr_est=40.0 no_speech=0.03
+    [noise:10 ] heard: 'VARUN KAMATH'  (4.0s)
+               value: 'varunkamath' -> WRONG | min_logprob=-0.48 agreement=0.3333333333333333 snr_est=18.2 no_speech=0.10
+    [music:5  ] heard: 'VARUN KAMATH'  (3.2s)
+               value: 'varunkamath' -> WRONG | min_logprob=-0.44 agreement=0.0 snr_est=8.3 no_speech=0.04
+
+--- email / speak / am_michael: 4.1s audio, TTS 0.5s
+    TTS input : My email is varun dot k at gmail dot com.
+    [clean    ] heard: 'My email is varun.k at gmail.com.'  (3.4s)
+               value: None -> WRONG | min_logprob=-4.96 agreement=None snr_est=40.0 no_speech=0.02
+    [noise:10 ] heard: 'My email is varun.k at gmail.com'  (3.5s)
+               value: None -> WRONG | min_logprob=-4.05 agreement=None snr_est=29.8 no_speech=0.07
+    [music:5  ] heard: 'My email is varun.k at gmail.com'  (3.3s)
+               value: None -> WRONG | min_logprob=-4.13 agreement=None snr_est=8.1 no_speech=0.05
+
+--- email / spell / bm_george: 4.9s audio, TTS 0.7s
+    TTS input : V. A. R. U. N. dot. K. at. G. M. A. I. L. dot. com.
+    [clean    ] heard: 'varun.kiatgmail.com'  (3.2s)
+               value: 'varunkiatgmailcom' -> WRONG | min_logprob=-0.47 agreement=0.0 snr_est=40.0 no_speech=0.12
+    [noise:10 ] heard: 'varun.kfgmail.com'  (3.3s)
+               value: 'varunkfgmailcom' -> WRONG | min_logprob=-0.38 agreement=0.0 snr_est=16.1 no_speech=0.30
+    [music:5  ] heard: 'V-A-R-U-N dot. K-F-G-M-A-I-L dot. Come.'  (4.4s)
+               value: 'varun.kfgmail.come' -> WRONG | min_logprob=-1.55 agreement=0.0 snr_est=9.9 no_speech=0.46
+
+--- phone / speak / af_bella: 4.8s audio, TTS 0.9s
+    TTS input : My number is four oh four, five five five, one two three four.
+    [clean    ] heard: 'My number is 404-555-1234.'  (3.9s)
+               value: '404-555-1234' -> OK | min_logprob=-0.33 agreement=1.0 snr_est=40.0 no_speech=0.03
+    [noise:10 ] heard: 'My number is 404-555-1234.'  (3.2s)
+               value: '404-555-1234' -> OK | min_logprob=-0.29 agreement=1.0 snr_est=24.0 no_speech=0.06
+    [music:5  ] heard: 'My number is 404-555-1234'  (3.2s)
+               value: '404-555-1234' -> OK | min_logprob=-0.28 agreement=1.0 snr_est=9.2 no_speech=0.08
+
+--- time / speak / bf_isabella: 3.0s audio, TTS 0.5s
+    TTS input : At seven thirty p m, please.
+    [clean    ] heard: 'at 7.30pm please.'  (3.1s)
+               value: '7.30pm' -> OK | min_logprob=-0.08 agreement=1.0 snr_est=40.0 no_speech=0.13
+    [noise:10 ] heard: 'at 7.30pm please.'  (3.1s)
+               value: '7.30pm' -> OK | min_logprob=-0.05 agreement=1.0 snr_est=15.4 no_speech=0.23
+    [music:5  ] heard: 'at 7.30pm please.'  (3.0s)
+               value: '7.30pm' -> OK | min_logprob=-0.13 agreement=1.0 snr_est=8.5 no_speech=0.09
+
+WAVs in /storage/ice1/7/0/fgao76/ConversationalAI_FinalProj/logs/smoke_7211659/audio_check  (listen to a few: names, spelled letters, noise levels)
+CHECK: 4 clean-speech case(s) were not recovered. Read the transcripts above: if names are missing from the TTS, Kokoro's espeak fallback for unknown words is not installed (pip install 'misaki[en]' espeakng-loader).
+total 443s
+!! audio check reported problems (see above)
+
+################ 3/6 one audio dialogue, no LLMs (scripted customer, rule extractor)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/cuda/__init__.py:228: UserWarning: CUDA initialization: CUDA unknown error - this may be due to an incorrectly set up environment, e.g. changing env variable CUDA_VISIBLE_DEVICES after program start. Setting the available devices to be zero. (Triggered internally at /__w/pytorch/pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+WARNING: Defaulting repo_id to hexgrad/Kokoro-82M. Pass repo_id='hexgrad/Kokoro-82M' to suppress this warning.
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/modules/rnn.py:1011: UserWarning: dropout option adds dropout after all but last recurrent layer, so non-zero dropout expects num_layers greater than 1, but got dropout=0.2 and num_layers=1
+  super().__init__("LSTM", *args, **kwargs)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/nn/utils/weight_norm.py:145: FutureWarning: `torch.nn.utils.weight_norm` is deprecated in favor of `torch.nn.utils.parametrizations.weight_norm`.
+  WeightNorm.apply(module, name, dim)
+/home/hice1/fgao76/scratch/envs/u2r/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=confirm | clean
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> Hi, I'd like to book a table at a restaurant.
+  A [normal:area] Which area would you like?
+  C <speak> I don't have a preference.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a preference.
+  A [normal:food] What kind of food would you like?
+  C <speak> I don't have a preference.
+  A [normal:day] What day is the booking for?
+  C <speak> On tuesday.
+  A [confirm:day] Just to confirm, the day is tuesday, is that right?
+  C <speak> Yes, that's right.
+  A [normal:people] How many people is it for?
+  C <speak> For 8 people.
+  A [confirm:people] Just to confirm, the number of people is 8, is that right?
+  C <speak> Yes, that's right.
+  A [normal:time] What time would you like the table?
+  C <speak> At 18:00.
+  A [confirm:time] Just to confirm, the time is 18:00, is that right?
+  C <speak> Yes, that's right.
+  A [normal:name] Can I have your name, please?
+  C <speak> It's Megan Chang.
+  A [confirm:name] Just to confirm, the name is Megan Chang, is that right?
+  C <speak> Yes, that's right.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My number is 687 847 5866.
+  A [confirm:phone] Just to confirm, the phone number is 687 847 5866, is that right?
+  C <speak> Yes, that's right.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> Great, thank you so much!
+    heard day='tuesday' p_hat=- -> confirm -> 'tuesday'
+    heard people='8' p_hat=- -> confirm -> '8'
+    heard time='18:00' p_hat=- -> confirm -> '18:00'
+    heard name='megan chang' p_hat=- -> confirm -> 'megan chang'
+    heard phone='687 847 5866' p_hat=- -> confirm -> '687 847 5866'
+  -> joint_goal=False success=False turns=17 repair effort=32.4s call=99s wrong=['email']
+
+=== dlg_00000 seed=0 | restaurant | can_type=True | policy=confirm | noise
+goal: {'day': 'tuesday', 'people': '8', 'time': '18:00', 'name': 'Megan Chang', 'email': 'meganchang50@gmail.com', 'phone': '687 847 5866'}
+  A [normal:None] Hello, how can I help you today?
+  C <speak> Hi, I'd like to book a table at a restaurant.
+  A [normal:area] Which area would you like?
+  C <speak> I don't have a preference.
+  A [normal:pricerange] What price range are you looking for?
+  C <speak> I don't have a preference.
+  A [normal:food] What kind of food would you like?
+  C <speak> I don't have a preference.
+  A [normal:day] What day is the booking for?
+  C <speak> On tuesday.
+  A [confirm:day] Just to confirm, the day is tuesday, is that right?
+  C <speak> Yes, that's right.
+  A [normal:people] How many people is it for?
+  C <speak> For 8 people.
+  A [confirm:people] Just to confirm, the number of people is 8, is that right?
+  C <speak> Yes, that's right.
+  A [normal:time] What time would you like the table?
+  C <speak> At 18:00.
+  A [confirm:time] Just to confirm, the time is 18:00, is that right?
+  C <speak> Yes, that's right.
+  A [normal:name] Can I have your name, please?
+  C <speak> It's Megan Chang.
+  A [confirm:name] Just to confirm, the name is Megan Chang, is that right?
+  C <speak> Yes, that's right.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:email] What is your email address?
+  C <speak> My email is meganchang50@gmail.com.
+  A [normal:phone] And a phone number we can reach you on?
+  C <speak> My number is 687 847 5866.
+  A [confirm:phone] Just to confirm, the phone number is 687 847 5866, is that right?
+  C <speak> Yes, that's right.
+  A [normal:None] Great, your booking is confirmed. Is there anything else?
+  C <speak> Great, thank you so much!
+    heard day='tuesday' p_hat=- -> confirm -> 'tuesday'
+    heard people='8' p_hat=- -> confirm -> '8'
+    heard time='18:00' p_hat=- -> confirm -> '18:00'
+    heard name='megan chang' p_hat=- -> confirm -> 'megan chang'
+    heard phone='687 847 5866' p_hat=- -> confirm -> '687 847 5866'
+  -> joint_goal=False success=False turns=17 repair effort=32.4s call=99s wrong=['email']
+
+condition    policy            success  wrong/dlg  repair s/dlg
+clean        confirm                0%       0.00          32.4
+noise:10     confirm                0%       0.00          32.4
+
+Logs: logs/smoke_7211659/audio_scripted/ (attempts, dialogues); error_scripts input: logs/smoke_7211659/audio_scripted/for_eval/
+
+real	2m38.673s
+user	18m21.579s
+sys	0m22.046s
+
+################ 4/6 start the LLM servers
+== starting agent LLM meta-llama/Llama-3.1-8B-Instruct (util 0.38)
