@@ -44,8 +44,9 @@ for m in meta-llama/Llama-3.1-8B-Instruct Qwen/Qwen2.5-7B-Instruct; do
     echo "$m: in the shared course cache"
   else
     echo "$m: not in the shared cache, downloading to $HF_HOME"
-    [[ $m == meta-llama/* ]] && { huggingface-cli whoami >/dev/null 2>&1 || huggingface-cli login; }
-    huggingface-cli download "$m" --exclude "original/*"
+    # Python API, not the CLI: huggingface-cli was renamed to `hf` in newer huggingface_hub.
+    # Llama is gated: accept the license on huggingface.co and set HF_TOKEN first.
+    python -c "from huggingface_hub import snapshot_download as d; print(d('$m', ignore_patterns=['original/*']))"
   fi
 done
 

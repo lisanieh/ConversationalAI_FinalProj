@@ -13,10 +13,21 @@ SHARED_HF=${SHARED_HF:-$SHARED/hf_cache}
 VLLM_ENV=${VLLM_ENV:-$SHARED/envs/CAI_A4}
 CONDA_SH=${CONDA_SH:-/usr/local/pace-apps/manual/packages/anaconda3/2023.03/etc/profile.d/conda.sh}
 
+# sbatch copies the submitting shell's environment. Submitted from an active env, (u2r)
+# included, the copied CONDA_* variables make `conda activate` here a no-op while
+# `module load` has already put the base python first. Start clean, then put the env
+# first on PATH ourselves, so the job doesn't depend on the shell it was submitted from.
+unset CONDA_PREFIX CONDA_SHLVL CONDA_DEFAULT_ENV CONDA_PROMPT_MODIFIER \
+      CONDA_PREFIX_1 CONDA_PREFIX_2 CONDA_PREFIX_3 PYTHONPATH PYTHONHOME
 module load anaconda3 2>/dev/null || true
 source "$CONDA_SH"
-conda activate "$ENV"
+conda activate "$ENV" || true
+export PATH="$ENV/bin:$PATH"
 export PYTHONNOUSERSITE=1              # ~/.local packages must not shadow the env's
+if [ "$(command -v python)" != "$ENV/bin/python" ] || ! python -c "import torch, whisper, kokoro" 2>/dev/null; then
+  echo "FATAL: the pipeline env is not usable: python=$(command -v python), ENV=$ENV"
+  python -c "import torch, whisper, kokoro" 2>&1 | tail -2; exit 1
+fi
 export HF_HOME=$SCR/hf XDG_CACHE_HOME=$SCR/cache HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 export PYTHONUNBUFFERED=1 TOKENIZERS_PARALLELISM=false OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-8}
 cd "${SLURM_SUBMIT_DIR:-$(pwd)}"
@@ -24,6 +35,11 @@ mkdir -p logs
 
 echo "== $(date)  node=$(hostname)  job=${SLURM_JOB_ID:-local}  env=$ENV"
 nvidia-smi -L || true
+# Fail fast on a node whose GPU torch cannot open ("CUDA unknown error"): otherwise
+# Kokoro and Whisper fall back to the CPU and the job runs ~10x slower.
+if [ -n "${SLURM_JOB_ID:-}" ] && ! python -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)" 2>/dev/null; then
+  echo "FATAL: torch cannot use the GPU on $(hostname). Resubmit with --exclude=$(hostname -s)"; exit 1
+fi
 
 CUSTOMER_MODEL=${CUSTOMER_MODEL:-Qwen/Qwen2.5-7B-Instruct}
 AGENT_MODEL=${AGENT_MODEL:-meta-llama/Llama-3.1-8B-Instruct}
@@ -44,9 +60,12 @@ serve() {         # model port gpu_fraction logfile
   local model=$1 port=$2 frac=$3 log=$4 hf
   hf=$(hf_home_for "$model")
   echo "== vLLM $model on :$port (gpu util $frac, HF_HOME=$hf)"
-  bash -c "source '$CONDA_SH' && conda activate '$VLLM_ENV' && export PYTHONNOUSERSITE=1 \
-           HF_HOME='$hf' HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 && \
-           exec python -m vllm.entrypoints.openai.api_server --model '$model' \
+  [ -x "$VLLM_ENV/bin/python" ] || { echo "FATAL: no python in VLLM_ENV=$VLLM_ENV"; exit 1; }
+  # Same rule as above: clean conda state, then the vLLM env's own python by its full path.
+  env -u CONDA_PREFIX -u CONDA_SHLVL -u CONDA_DEFAULT_ENV -u PYTHONPATH \
+    bash -c "source '$CONDA_SH'; conda activate '$VLLM_ENV' || true; export PATH='$VLLM_ENV/bin':\$PATH \
+           PYTHONNOUSERSITE=1 HF_HOME='$hf' HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1; \
+           exec '$VLLM_ENV/bin/python' -m vllm.entrypoints.openai.api_server --model '$model' \
              --host 127.0.0.1 --port $port --dtype bfloat16 --max-model-len 4096 \
              --gpu-memory-utilization $frac --seed 42" > "$log" 2>&1 &
   local pid=$!
