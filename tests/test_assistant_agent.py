@@ -77,6 +77,11 @@ class TestRepairDecoding(unittest.TestCase):
         self.assertEqual(decode_spelled("v a r u n dot k at gmail dot com", "email"), "varun.k@gmail.com")
         self.assertEqual(decode_spelled("varun.k@gmail.com", "email"), "varun.k@gmail.com")
         self.assertEqual(decode_spelled("4 0 4, 5 5 5, 1 2 3 4", "phone"), "404 555 1234")
+        # Smoke 7223241: Whisper hyphenated a symbol word into the letter chain.
+        self.assertEqual(decode_spelled("D-E-N-N-I-S dot B-AT-O-U-T-L-O-O-K dot com", "email"),
+                         "dennis.b@outlook.com")
+        self.assertEqual(decode_spelled("V-A-R-U-N dot K-F-G-M-A-I-L dot com", "email"), "varun.kfgmail.com")
+        self.assertEqual(decode_spelled("M. A. R. Y. dash. J. A. N. E.", "name"), "mary-jane")
 
     def test_confirm(self):
         r = RuleExtractor()

@@ -99,7 +99,9 @@ def decode_spelled(text: str, slot: str) -> str:
     words = []
     if slot == "email":   # 'varun.kiatgmail.com': a dot inside a word is part of the address
         low = re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9])", " dot ", low)
-    low = re.sub(r"(?<=\b[a-z0-9])-(?=[a-z0-9]\b)", " ", low)   # 'V-A-R-U-N': hyphens between letters
+    # Whisper joins spelled units with hyphens ('V-A-R-U-N', 'B-AT-O-U-T'); a real hyphen
+    # is said as "dash", so every hyphen between letters/digits is just a separator.
+    low = re.sub(r"(?<=[a-z0-9])-(?=[a-z0-9])", " ", low)
     for group in re.split(r",|;|\bspace\b", low):
         units = []
         for tok in re.findall(r"[a-z]+|\d|[@._+\-']", group):
