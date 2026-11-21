@@ -1,0 +1,22 @@
+{
+ "dlg_00000": {
+  "area": "centre",
+  "pricerange": "expensive",
+  "food": "african",
+  "day": "monday",
+  "people": "8",
+  "time": "14:45",
+  "name": "megan chang",
+  "email": "meganchang50@gmail.com",
+  "phone": "687 847 5866"
+ },
+ "dlg_00001": {
+  "area": "north",
+  "day": "monday",
+  "people": "4",
+  "stay": "5",
+  "name": "dennis boone",
+  "email": "dennis.b@outlook.com",
+  "phone": "377 963 1537"
+ }
+}
