@@ -91,6 +91,8 @@ def decode_spelled(text: str, slot: str) -> str:
     if slot == "email" and _EMAIL_RE.search(low):   # recognizer wrote the address itself
         return canonical(slot, _EMAIL_RE.search(low).group())
     words = []
+    if slot == "email":   # 'varun.kiatgmail.com': a dot inside a word is part of the address
+        low = re.sub(r"(?<=[a-z0-9])\.(?=[a-z0-9])", " dot ", low)
     low = re.sub(r"(?<=\b[a-z0-9])-(?=[a-z0-9]\b)", " ", low)   # 'V-A-R-U-N': hyphens between letters
     for group in re.split(r",|;|\bspace\b", low):
         units = []

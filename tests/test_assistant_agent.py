@@ -91,6 +91,18 @@ class TestRuleExtractor(unittest.TestCase):
                          {"phone": "404 555 1234"})
         self.assertEqual(r.extract("I don't have a preference.", asked_slot="area")[1], {"area": "dontcare"})
 
+    def test_whisper_formats_seen_on_pace(self):
+        # Transcripts Whisper small.en produced in the PACE smoke test (job 7209938).
+        r = RuleExtractor()
+        for heard, want in [("My email is varun.k at gmail.com.", "varun.k@gmail.com"),
+                            ("My email is meganchang50 at gmail.com.", "meganchang50@gmail.com"),
+                            ("My email is meganchang50@gmail.com.", "meganchang50@gmail.com")]:
+            self.assertEqual(r.extract(heard, asked_slot="email")[1], {"email": want}, heard)
+        for heard in ("VARUNKAMATH", "VARUN KAM-ATH", "VARUN KAMATH"):
+            self.assertTrue(values_match("name", decode_spelled(heard, "name"), "Varun Kamath"), heard)
+        self.assertFalse(values_match("name", "Var Cameth", "Varun Kamath"))
+        self.assertEqual(decode_spelled("varun.kiatgmail.com", "email"), "varun.kiatgmail.com")
+
 
 class TestLLMExtractor(unittest.TestCase):
     class FakeLLM:

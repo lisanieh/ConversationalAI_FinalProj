@@ -200,6 +200,9 @@ def canonical(slot: str, value: str | None) -> str:
 
 def values_match(slot: str, a: str | None, b: str | None) -> bool:
     ca, cb = canonical(slot, a), canonical(slot, b)
+    if slot == "name" and ca and cb and DONTCARE not in (ca, cb):
+        # Spacing and hyphens are format: Whisper writes spelled letters as 'VARUNKAMATH'.
+        return re.sub(r"[^a-z]", "", ca) == re.sub(r"[^a-z]", "", cb) != ""
     return bool(ca) and ca == cb
 
 
